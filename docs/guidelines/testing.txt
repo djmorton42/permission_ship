@@ -1,0 +1,107 @@
+Use test-first development to demonstrate that the software satisfies its business requirements. The goal is correct, proven behaviour—not merely passing tests.
+
+**Start with business behaviour**
+
+Before implementing, identify the business scenarios and observable outcomes the feature must support. Translate these into concrete examples with meaningful inputs, actions, and expected results.
+
+Prioritize tests that prove these scenarios work across the relevant components. Add finer-grained tests where they improve coverage, diagnosis, or feedback speed. Passing unit tests are insufficient if the business workflow remains unproven.
+
+Consider relevant boundaries, invalid inputs, permissions, retries, concurrency, and partial failures. Choose scenarios based on the feature’s actual risks.
+
+**Follow the red–green–refactor cycle**
+
+For each increment of behaviour:
+
+1. Write a test expressing the required behaviour before writing the production implementation.
+2. Run it and observe it fail.
+3. Verify that it fails because the required behaviour is missing or incorrect. Compilation errors, broken fixtures, and unrelated environment failures do not establish this; resolve those and observe the intended failure.
+4. Implement the correct business behaviour.
+5. Run the test again and confirm it verifies that behaviour and passes.
+6. Refactor as needed while keeping the relevant tests green.
+
+Keep increments small enough that the failing test clearly explains the next implementation step. Do not implement the feature first and then add tests retrospectively. If a new test passes immediately, investigate why; do not claim it demonstrates the red phase.
+
+For bug fixes, first reproduce the reported incorrect behaviour with a failing regression test.
+
+**When test-first does not apply**
+
+Do not write tests first for configuration, generated scaffolding, visual styling, or throwaway spikes. Tests for these add no proof of business behaviour. Before code from a spike is kept, write the tests that prove its behaviour.
+
+**Treat requirements as the source of truth**
+
+When a test fails, investigate the behaviour before deciding what to change. Check the requirement, test assumptions, setup, assertions, and implementation.
+
+Determine what the software should do, ensure the implementation does it, and ensure the test verifies it. A test can be wrong; do not distort correct production behaviour to satisfy an incorrect assertion. Likewise, do not weaken a valid test to accommodate a defect.
+
+If an expected result is wrong, correct it with a clear explanation grounded in the requirement. If the requirement is materially ambiguous, resolve that ambiguity rather than silently choosing whichever interpretation makes the test pass.
+
+**Test behaviour, not implementation structure**
+
+Assert externally meaningful results: returned values, persisted state, emitted events, observable interactions, or user-visible outcomes.
+
+Avoid assertions about private methods, internal call sequences, class layout, or other implementation details unless that detail is itself an explicit contract. Tests should generally survive refactoring that preserves behaviour.
+
+Calls across an injected boundary (for example, an email gateway or a job scheduler) are a contract. Assert them with a fake at that boundary. Do not assert calls between internal objects.
+
+Avoid tautological tests. Defining a constant as 42 and asserting that the constant equals 42 does not establish useful behaviour. Instead, exercise a business scenario in which using the wrong value would produce an incorrect result.
+
+Derive expected results independently from the business requirements or concrete examples. Do not calculate them using the production logic being tested or reproduce that logic in the test.
+
+Every test must be capable of detecting a plausible defect. Be able to explain which incorrect behaviour would cause it to fail. Merely executing code, asserting fixture values, or checking results predetermined by mocks is insufficient.
+
+**Choose test boundaries for confidence**
+
+Use unit, integration, browser, or other tests according to what must be proven. Choose boundaries that exercise the components and interactions necessary to establish the behaviour.
+
+Use browser tests when confidence depends on the user experience. Use integration tests when confidence depends on components working together. Use unit tests for focused logic and rapid feedback.
+
+Overlap is appropriate when tests provide distinct value—for example, a browser test proving a critical user journey alongside faster tests covering its business rules and variations.
+
+Mock deliberately. Do not mock away the behaviour or integration the test claims to verify.
+
+Where useful, supplement concrete examples with property-based tests that verify business invariants across generated inputs, especially for calculations, transformations, and state transitions.
+
+**Keep tests trustworthy**
+
+Make tests deterministic and isolated. Control time, randomness, and external dependencies where appropriate. Tests must not depend on execution order or state left by other tests.
+
+Freeze or travel time with the framework's time helpers. Do not depend on the real clock.
+
+Block external network access by default. A test that needs an external service uses a fake or a recorded response at the injected boundary.
+
+Keep test data minimal and explicit. Create only the records a test needs, and set the values the test depends on in the test itself. Do not depend on shared fixtures or factory defaults for values that matter to the assertion.
+
+Keep the fast test suite fast enough to run on every change: seconds, not minutes. Treat a slow test as a defect to investigate.
+
+Use explicit synchronization or condition-based waits instead of arbitrary sleeps.
+
+Treat flaky tests as defects. Investigate their causes; rerunning until green, suppressing failures, or weakening assertions does not resolve them.
+
+**Use mutation testing to challenge the tests**
+
+Run mutation testing against new or changed business logic where tooling and runtime make it practical. Prefer a focused run over skipping it because a repository-wide run would be expensive.
+
+Investigate surviving mutations. Add or improve behaviour-based tests for meaningful gaps. Do not add implementation-coupled assertions solely to kill mutations that do not represent an observable contract violation.
+
+Distinguish killed mutations, surviving mutations, equivalent mutations, and tooling failures. If automated mutation testing is unavailable, temporarily introduce representative defects, verify that the relevant tests fail, and revert the defects. Clearly identify this as a manual check.
+
+Mutation scores and coverage percentages are diagnostic tools, not substitutes for proving the business scenarios.
+
+**Use project-specific tools**
+
+Each project names its tools for mutation testing, property-based testing, browser testing, network blocking, and time control in its own docs. Use those tools.
+
+**Verify honestly**
+
+After implementation and refactoring, run the relevant regression tests and required repository checks.
+
+Never claim a test or check passed unless you ran it and observed the result. Completion requires evidence that the intended behaviour works, not simply a green test suite.
+
+**Reporting (for AI agents)**
+
+When you finish a task, report:
+- Which business scenarios are covered and at which test boundaries.
+- The failures observed before implementation and the passing results afterward.
+- Any corrected test expectations and their justification.
+- Mutation-testing results and any unresolved meaningful survivors.
+- Anything not run, blocked, or still unproven.

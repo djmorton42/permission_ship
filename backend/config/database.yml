@@ -1,0 +1,27 @@
+# PostgreSQL runs in Docker locally (see ../docker-compose.yml).
+# Connection settings come from env vars with defaults matching docker-compose.
+# In production, set DATABASE_URL (it takes precedence over the values below).
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  host: <%= ENV.fetch("DB_HOST", "localhost") %>
+  port: <%= ENV.fetch("DB_PORT", 5432) %>
+  username: <%= ENV.fetch("DB_USERNAME", "permishly") %>
+  password: <%= ENV.fetch("DB_PASSWORD", "permishly") %>
+
+# gssencmode: disable avoids a libpq segfault on macOS in forked processes
+# (Solid Queue forks its workers). The local Docker Postgres doesn't use GSSAPI.
+development:
+  <<: *default
+  database: permishly_development
+  gssencmode: disable
+
+test:
+  <<: *default
+  database: permishly_test
+  gssencmode: disable
+
+production:
+  <<: *default
+  database: permishly_production

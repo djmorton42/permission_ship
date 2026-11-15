@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Start the full local stack: Postgres + Redis (Docker), Rails API, Sidekiq, Vite.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+docker compose up -d --wait
+
+if ! gem list --silent -i foreman; then
+  echo "Installing foreman..."
+  gem install foreman --no-document
+fi
+
+exec foreman start -f Procfile.dev "$@"

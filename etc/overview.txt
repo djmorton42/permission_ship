@@ -1,0 +1,56 @@
+- Saas application
+- Probably Ruby on Rails API with React Frontend
+- Desktop and mobile support
+- Acts as a communications portal between parents, teachers and possibly students
+- Parents and students can have accounts
+- Maintain relationships between parents and students
+- A parent can have multiple students, a student can have multiple parents
+- Login through username and password or gmail. Maybe eventually other login providers
+- A student has a school that they attend. This can chnage over time. We need to maintain a history.
+- A parent can have students at multiple schools. They should also be able to see the relevant history from previous schools.
+- A school administrator has an account they can log in with and manage their school
+- There will probably be more than one administrator - might include principals, but also office staff
+- Open question: If a school administrator has kids at a school, do they use a separate login to see their kids stuff, or is it just a different view from their one login?
+- At the start of a school year (or any time later), new students get enrolled by an administrator
+  - Their parents would need to be notified that they needed to create an account and there needs to be a way to link their kids to their account
+  - Some options 
+    - the system generates a one-time-use code for each student enrollment and then that gets printed out and sent home with the kids
+    - Kids provide their parent's email addresses, when are entered into the system. Parents then get an email with a link they can click on which ties their account together with their kids. Might be problematic - a kid could provide their own email and pretend to be their parent? Maybe not a problem?
+- A school board may buy a license for all schools in the board - Probably a board level adminstrator function to assign the head administrator for each school?
+- Different roles? School Head Administrator (the principal), School Assistant Administrator (the admin staff), Board Administrator, Teacher
+
+
+Patent School Comms
+
+- See what's been paid for already, and what is outstanding
+- Report attendance (custom form)
+- Request teacher meeting
+- Confirm club/extra curricular attendance (custom form)
+- Club discovery, scheduling and signup
+- Give permission and pay for field trips
+- MCP?
+- Calendar integration?
+- push notifications (field trip running late, etc.
+- Parent teacher meeting scheduling
+
+- Reminder with custom scheduling
+- push notifications, and sms?
+- Maybe parents can set their own reminder schedule?
+
+- signup code for students
+- groups, lists and registrations
+- daily digest option instead of mass emails
+- student controlled permissions at a certain age?
+- Would teachers by linked to specific classes? Would classes per year be stored?
+- Dynamic lists created by teachers or administrators for mailing/permission slips/trip payments/notifications etc.
+
+
+
+
+Actors:
+  - Board Administrator (optional, some schools may enroll separate from a board)
+  - School Administrator (Principal)
+  - School Assistant Administrator (Office and Admin Staff)
+  - Teacher
+  - Student
+  - Parent/Guardian

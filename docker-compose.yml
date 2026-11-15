@@ -1,0 +1,22 @@
+# Local development services (Postgres also stores Solid Queue jobs). Start with: docker compose up -d
+name: permishly
+
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: permishly
+      POSTGRES_PASSWORD: permishly
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      # Postgres 18+ images keep data in a versioned subdirectory of /var/lib/postgresql
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U permishly"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:

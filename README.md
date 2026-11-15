@@ -1,1 +1,64 @@
-# permission_ship
+# Permishly
+
+A communications portal for schools, parents, teachers and students. See `etc/overview.txt` for product notes.
+
+## Layout
+
+```
+backend/            Rails 8.1 API (Ruby 4.0), PostgreSQL, Solid Queue, RSpec
+frontend/           React 19 + TypeScript (Vite), React Router, TanStack Query, Tailwind, Vitest
+docker-compose.yml  Local Postgres 18
+mise.toml           Pinned Ruby and Node versions
+Procfile.dev        Processes started by bin/dev
+architecture.md     Backend architecture rules
+todo.md             Open decisions and pending work
+docs/guidelines/    Synced copies of shared guidelines (do not edit; see bin/sync-guidelines)
+```
+
+## Prerequisites
+
+- [mise](https://mise.jdx.dev): `brew install mise`, then add `eval "$(mise activate zsh)"` to `~/.zshrc`
+- Docker (OrbStack or Docker Desktop)
+
+## Getting started
+
+```sh
+bin/setup   # installs Ruby/Node, starts Postgres, installs deps, prepares the DB
+bin/dev     # runs Postgres, Rails (:3000), Solid Queue workers and Vite (:5173)
+```
+
+Open http://localhost:5173. Vite proxies `/api` to Rails, so the browser talks to a single origin in development.
+
+## Common tasks
+
+| Task                    | Command                                           |
+| ----------------------- | ------------------------------------------------- |
+| Backend tests           | `cd backend && bundle exec rspec`                 |
+| Backend lint            | `cd backend && bin/rubocop`                       |
+| Backend security scan   | `cd backend && bin/brakeman && bin/bundler-audit` |
+| Frontend tests          | `cd frontend && npm test`                         |
+| Frontend lint / types   | `cd frontend && npm run lint && npm run typecheck`|
+| Sync guidelines         | `bin/sync-guidelines` (`--check` to verify)       |
+| Stop services           | `docker compose down`                             |
+| Wipe local data         | `docker compose down -v`                          |
+
+## API conventions
+
+- JSON endpoints live under `/api/v1` (`Api::V1::*` controllers inheriting `Api::V1::BaseController`).
+- Health check: `GET /api/v1/health` (DB + job worker status); `GET /up` for load balancers.
+- Background jobs use Active Job on Solid Queue, stored in the primary database. Read the job rules in `architecture.md` before writing a job. In development, restart `bin/dev` (or the `jobs` process) after adding a new job class; workers don't pick up new classes until restarted.
+- Job dashboard (Mission Control): http://localhost:3000/jobs. It is open in development and uses HTTP basic auth elsewhere (`bin/rails mission_control:jobs:authentication:configure`).
+
+## Configuration
+
+The backend reads these env vars; the defaults match `docker-compose.yml`:
+
+| Variable       | Default                    |
+| -------------- | -------------------------- |
+| `DB_HOST`      | `localhost`                |
+| `DB_PORT`      | `5432`                     |
+| `DB_USERNAME`  | `permishly`                |
+| `DB_PASSWORD`  | `permishly`                |
+| `CORS_ORIGINS` | `http://localhost:5173`    |
+
+In production, set `DATABASE_URL` instead.

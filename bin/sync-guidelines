@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# Sync shared guideline files from their source of truth (the useful_prompts repo)
+# into docs/guidelines/. Never edit the copies here; change the source and re-sync.
+#
+# Usage:
+#   bin/sync-guidelines            # copy the latest files from the source repo
+#   bin/sync-guidelines --check    # exit 1 if the copies differ from the source
+#
+# GUIDELINES_SOURCE overrides the source: any git URL or a local repo path.
+# Only committed content on the source's default branch is used.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+SOURCE="${GUIDELINES_SOURCE:-git@github.com:djmorton42/useful_prompts.git}"
+DEST="docs/guidelines"
+FILES=(testing.txt language.txt)
+
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+
+clone_url="$SOURCE"
+[[ -d "$SOURCE" ]] && clone_url="file://$(cd "$SOURCE" && pwd)"  # local path: allow --depth
+git clone --quiet --depth 1 "$clone_url" "$tmp/src"
+commit="$(git -C "$tmp/src" rev-parse HEAD)"
+
+if [[ "${1:-}" == "--check" ]]; then
+  stale=0
+  for f in "${FILES[@]}"; do
+    if ! cmp -s "$tmp/src/$f" "$DEST/$f"; then
+      echo "Out of date: $DEST/$f"
+      stale=1
+    fi
+  done
+  if [[ $stale -eq 1 ]]; then
+    echo "Run bin/sync-guidelines to update from $SOURCE ($commit)."
+    exit 1
+  fi
+  echo "Guidelines are up to date with $SOURCE ($commit)."
+  exit 0
+fi
+
+mkdir -p "$DEST"
+for f in "${FILES[@]}"; do
+  cp "$tmp/src/$f" "$DEST/$f"
+done
+
+cat > "$DEST/SOURCE" <<SRC
+Synced by bin/sync-guidelines. Do not edit these files here; change them in the
+source repo and re-run the script.
+
+source: $SOURCE
+commit: $commit
+files: ${FILES[*]}
+SRC
+
+echo "Synced ${FILES[*]} from $SOURCE ($commit)."

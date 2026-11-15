@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Idempotent local setup. Run from anywhere: bin/setup
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+echo "== Installing Ruby and Node (mise) =="
+mise install
+
+echo "== Starting Postgres and Redis =="
+docker compose up -d --wait
+
+echo "== Backend dependencies and database =="
+(cd backend && bundle install && bin/rails db:prepare)
+
+echo "== Frontend dependencies =="
+(cd frontend && npm install)
+
+echo "== Done. Run bin/dev to start everything. =="

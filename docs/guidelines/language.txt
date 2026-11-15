@@ -1,0 +1,9 @@
+- Use simple technical language in docs and in responses to prompts. Follow ASD-STE100 principles: short sentences, active voice, one idea per sentence, and common words.
+- Be brief and concise. Stick to facts.
+- Consider the audience of the document and tailor the content to that audience. Do not include information that is not relevant to that audience.
+- Default audiences:
+  - Repo docs: developers and AI coding agents who work on the project.
+  - Chat responses: me.
+- If the audience is not one of the defaults and you do not know who it is or what it cares about, ask.
+- Write the current state, not its history. For example, write "We use Solid Queue", not "We switched from Sidekiq to Solid Queue".
+- Just because we discuss something does not mean it goes in a doc. State the decision we made and a one-line reason. Do not describe alternatives we rejected or include trade-off analysis unless I ask for it.
