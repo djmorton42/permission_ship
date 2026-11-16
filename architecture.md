@@ -1,76 +1,125 @@
-# Rails Backend
+# Architecture
 
-Architecture rules for the backend. Open decisions and pending work are in `todo.md`.
+Architecture rules for Permishly. Open decisions and pending work are in `todo.md`.
 
-## Layers
+## Overview
 
-We use onion architecture. Dependencies point inward only. An inner layer never references an outer layer.
+- The backend is a modular Rails application. Code is organized by business capability.
+- Commands do writes. Queries do reads (CQRS).
+- Commands and queries use Active Record directly.
+- Commands and queries use the same database. Reason: a write is visible to the next query immediately.
+- We do not use event sourcing, a command bus, separate read stores, or asynchronous command processing by default. Add one only when a concrete requirement needs it.
 
-| Layer | Contains | Depends on |
-| --- | --- | --- |
-| Delivery (outermost) | Controllers (`Api::V1::*`), jobs, rake tasks | Application |
-| Application | Commands, queries, request DTOs, response DTOs, `UseCaseResult` | Domain; repositories and gateways (injected) |
-| Domain (innermost) | Entities, value objects, domain rules (plain Ruby) | Nothing outside the domain |
-| Infrastructure | Repositories, ActiveRecord models, gateways (push, email, SMS, payments), task scheduler | Domain. The task scheduler also references job classes. |
+| Component | Responsibility |
+| --- | --- |
+| React | Interaction, presentation state, and user-facing validation. Sends business intent. Shows query results. |
+| Rails controllers | Convert HTTP input into a command or query call. Map the result to an HTTP response. |
+| Commands | Coordinate authorization, transactions, loading, business rules, persistence, and jobs. |
+| Models and policies | Own invariants, calculations, eligibility rules, and valid state changes. |
+| Queries | Do efficient reads. Return read models or response DTOs. |
+| Jobs | Run deferred work by calling commands. |
 
-- ActiveRecord models are for persistence only. They stay in infrastructure.
-- Repositories take and return domain objects, never AR models.
-- Repositories do not open transactions.
-- The domain layer does not know about Rails, HTTP, jobs, or the database.
+## Capabilities
 
-### Loading data
+- Each business capability has a namespace. Examples: `Enrollments`, `FieldTrips`, `Notifications`.
+- Commands, queries, policies, and DTOs live in `app/capabilities/<capability>/`. Example: `app/capabilities/enrollments/enroll_student.rb` defines `Enrollments::EnrollStudent`.
+- Active Record models stay in `app/models`. Each model belongs to one capability.
+- Only a capability's own commands write its models. Other capabilities call its commands. Reason: each piece of state has one owner.
+- Queries can read across capabilities.
+- We enforce ownership by convention. A tool to enforce it is in `todo.md`.
 
-- Repositories return fully loaded domain objects. There is no lazy loading.
-- Each repository method loads the associations its use case needs. Example: `find_student` and `find_student_with_guardians` are separate methods.
-- Access to an association that was not loaded is a bug. Reason: data access stays explicit and N+1 queries cannot occur.
+## Commands
 
-## Commands and queries
+- Every consequential write goes through a command. This includes writes from controllers, jobs, rake tasks, and admin tools.
+- Name commands for business intent. Example: `FieldTrips::ApprovePermission`, not `FieldTrips::UpdatePermission`. A simple edit can be a plain update command.
+- A workflow usually maps to one command. A command can call other commands.
+- Commands inherit from `ApplicationCommand`.
+- A command declares its inputs with `attribute` and validates them with `validates`.
+- A command declares its dependencies with `dependency` (see Dependencies).
+- `Command.call(inputs, **dependencies)` runs the command and returns a `UseCaseResult`.
+- A command can return data, for example the ID of a new record or a small outcome payload.
 
-- Every action is a command or a query. Commands change state. Queries do not change state.
-- A workflow usually maps to one command or query.
-- A command or query can compose finer-grained commands or queries. A query can call queries, but not commands.
-- Each command and query has `execute(request)`. It takes a request DTO and returns a `UseCaseResult`.
-- A command can return data, for example the ID of a created record or a response DTO.
+```ruby
+class Enrollments::EnrollStudent < ApplicationCommand
+  attribute :student_id, :string
+  attribute :school_id, :string
+  attribute :starts_on, :date
+  validates :student_id, :school_id, :starts_on, presence: true
 
-### Command pipeline
+  dependency :push_gateway, default: -> { PushGateway.new }
 
-Every command does these steps in this order:
+  def perform
+    # load, authorize, check rules, write
+  end
+end
 
-1. Call `validate` on the request. If the request is not valid, return a failure.
+Enrollments::EnrollStudent.call(enroll_params)
+```
+
+### Command steps
+
+`ApplicationCommand` runs these steps in this order:
+
+1. Validate the inputs. If they are not valid, return a `validation` failure.
 2. Open a transaction (see Transactions).
-3. Load data through repositories. Authorize the actor. (The authorization design is in `todo.md`.)
-4. Do the domain and workflow validation.
-5. Do the workflow.
+3. Call `perform`, which:
+   1. loads data;
+   2. authorizes the actor (the authorization design is in `todo.md`);
+   3. checks business rules;
+   4. writes.
 
-Steps 3 to 5 run in one transaction. A domain check that protects a write must use a row lock or a database constraint. Example: "Is there space on the field trip?" Reason: two concurrent requests can both pass a check that only reads.
+Steps 2 and 3 run in one transaction.
 
-## Requests (input DTOs)
+### Business rules
 
-- Every command and query takes a request object, for all HTTP verbs.
-- Query requests contain IDs, filters, and pagination.
-- Name a request for its use case, not for its endpoint. Example: `EnrollStudentRequest`. Reason: jobs and other commands also make requests.
-- Requests do not depend on HTTP.
-- Controllers make requests from `params`. Requests declare their attributes and ignore other params, so we do not use strong params.
-- Requests use `ActiveModel::Model` and `ActiveModel::Attributes` for type casting and validation.
-- `validate` returns a `ValidationResult`.
+- Put a rule that applies to one record on its model, as a plain method or a validation. Do not use a callback.
+- Put a rule that spans records, or that more than one command uses, in a policy object in its capability. Do not copy rules between commands.
+- A check that protects a write must use a row lock, optimistic locking (`lock_version`), or a database constraint. Example: "Is there space on the field trip?" Reason: two concurrent requests can both pass a check that only reads.
+
+### Idempotency
+
+A command is idempotent when a second run with the same input has no additional effect.
+
+- Commands that cost money or contact people (payments, notifications) must be idempotent:
+  - The client sends an `Idempotency-Key` header. React makes a new UUID for each submission.
+  - The server stores the key with the result. A repeated key returns the stored result. The command does not run again.
+  - Calls to providers that support it (for example, payment APIs) pass an idempotency key.
+- Other commands use a unique constraint when a natural key exists. Example: one permission slip for each student and trip. A duplicate returns the existing record.
+
+## Queries
+
+- Queries inherit from `ApplicationQuery`. They use the same `attribute`, `validates`, and `call` shape as commands.
+- Queries use Active Record or SQL directly.
+- Shape each query for its consumer: joins, aggregates, filters, authorization scope, and pagination.
+- Queries return read models or response DTOs. They never return Active Record models.
+- Queries do not write. `ApplicationQuery` runs `perform` in `ActiveRecord::Base.while_preventing_writes`.
+- A query can call other queries, but not commands.
+
+```ruby
+Enrollments::RosterQuery.call(school_id:, page:)
+```
+
+## Loading data
+
+- `strict_loading_by_default` is on. Reason: loading stays explicit, and N+1 queries raise errors.
+- Load associations explicitly with `includes`, `preload`, or `eager_load`.
 
 ## Results and errors
 
-- A `UseCaseResult` is a success or a failure.
-- A success contains a value. The value is a response DTO.
+- `UseCaseResult` is a success or a failure.
+- A success contains a value: an ID, a small outcome payload, or a response DTO.
 - A failure contains errors and a category.
 - `Api::V1::BaseController` maps failure categories to HTTP statuses:
 
-  | Category | HTTP status |
-  | --- | --- |
-  | `validation` | 422 |
-  | `forbidden` | 403 |
-  | `not_found` | 404 |
-  | `conflict` | 409 |
+  | Category | Meaning | HTTP status |
+  | --- | --- | --- |
+  | `validation` | Input is not valid, or a business rule rejects it | 422 |
+  | `forbidden` | The actor has no permission | 403 |
+  | `not_found` | A record is not found | 404 |
+  | `conflict` | A concurrent change or a duplicate | 409 |
 
-- Expected business outcomes are failure results. Examples: input is not valid, the actor has no permission, a record is not found, a business rule is not met.
-- Bugs and infrastructure failures raise exceptions.
-- All failures use one error format, including `ValidationResult` errors:
+- Bugs and infrastructure failures raise exceptions. The API returns 500.
+- All failures use one error format:
 
   ```json
   { "errors": [{ "field": "email", "code": "invalid", "message": "is not a valid email address" }] }
@@ -78,40 +127,68 @@ Steps 3 to 5 run in one transaction. A domain check that protects a write must u
 
   `field` is `null` when an error is not about one field.
 
-## Responses (output DTOs)
+## Responses
 
 - The serializer renders the value in the result.
-- The value is a response DTO. It is never a domain entity or an AR model. Reason: the API shape stays separate from internal models.
+- API responses are response DTOs. They are never Active Record models. Reason: the API shape stays separate from the database structure.
 
 ## Validation
 
 | Where | What |
 | --- | --- |
-| Request | Shape and format: presence, types, formats, lengths |
-| Command and domain | Business rules: uniqueness in context, state changes, eligibility |
-| AR model | Little or nothing |
+| React | User-facing checks for fast feedback. The server does not trust them. |
+| Command and query inputs | Shape and format: presence, types, formats, lengths |
+| Models and policies | Business rules and invariants |
 | Database | Always: NOT NULL, foreign keys, unique indexes, check constraints |
 
-Database constraints are the last line of defense.
+- The server is the authority for validation and authorization.
+- Database constraints are the last line of defense.
 
 ## Transactions
 
-- The application layer owns transactions.
-- Each command runs its steps in `ApplicationRecord.transaction`.
+- Commands own transactions.
+- `ApplicationCommand` runs each command in `ApplicationRecord.transaction`.
 - Rails joins a transaction that is already open. So the outermost command commits, and composed commands run in the same transaction.
-- A command that returns a failure rolls back. The base command raises `ActiveRecord::Rollback` to do this.
+- A command that returns a failure rolls back. `ApplicationCommand` raises `ActiveRecord::Rollback` to do this.
 - `ActiveRecord::Rollback` has an effect only at the outermost level. An inner command cannot roll back alone.
 - When a composed command fails, the caller must also return a failure.
 - To recover from a failed inner command, run it in a savepoint (`requires_new: true`). Otherwise its partial writes are committed with the outer command.
-- Queries do not write. We can enforce this with `ActiveRecord::Base.while_preventing_writes`.
-- Do not call external services (payments, email, push) in a transaction. Schedule a job (see Background jobs).
+- Do not call external services (payments, email, push) in a transaction. Enqueue a job (see Background jobs).
 
 ## Dependencies
 
 - We do not use a DI framework.
-- Dependencies are constructor keyword arguments with production defaults. Example: `def initialize(push_gateway: PushGateway.new)`.
-- Delivery code calls `.new`. Tests pass fakes.
-- Inject only boundaries: external service gateways, the task scheduler, the clock, and ID or token generators. Do not inject pure code.
+- A command or query declares a dependency with `dependency :name, default: -> { ... }`.
+- Production code uses the defaults. Tests pass fakes to `call`, for example `call(inputs, push_gateway: fake)`.
+- Inject only boundaries: external service gateways and ID or token generators.
+
+## Time
+
+- We do not inject a clock. Reason: Rails and gems read `Time.now`, so a second clock can disagree with them.
+- When "now" is a business input, make it an `as_of` attribute on the command or query. Reason: production code can run "as of" another time, for previews, re-runs, and backfills.
+
+  ```ruby
+  attribute :as_of, :datetime, default: -> { Time.current }
+  ```
+
+- Use `as_of` for reminders, digests, deadlines, and history lookups (for example, "which school was the student at on this date").
+- Read the time once in each command or query. Use `as_of` or one local `now`. Do not call `Time.current` more than once. Reason: two reads can fall on different sides of midnight.
+- Tests control time with Rails time helpers (`travel_to`, `freeze_time`), or pass `as_of`.
+- SQL `now()` and Postgres `uuidv7()` use the database clock. Time helpers do not change them. In time-dependent queries, pass the time as a bind parameter instead of `now()`.
+
+## Isolated domain models
+
+Most capabilities use Active Record models for business rules. A capability can use a domain model that does not depend on persistence when it has complex interacting rules, state transitions, or calculations that Active Record makes hard to express.
+
+In that capability:
+
+1. Domain objects and policies do not depend on Active Record, HTTP, or external APIs.
+2. Commands use repositories that the capability defines.
+3. Repositories map between Active Record and domain objects.
+4. Transaction scope, loading, and concurrency are explicit.
+5. The command's public inputs and result do not change.
+
+Do not add a repository for each table. Do not copy every model into a domain object. Add a boundary only when it makes a real business model simpler.
 
 ## Callbacks
 
@@ -136,12 +213,30 @@ Database constraints are the last line of defense.
 - You can edit existing migrations.
 - These rules change when we go to production (see `todo.md`).
 
+## API and frontend
+
+- API endpoints are under `/api/v1`.
+- Commands return IDs or small outcome payloads. React gets full data from queries.
+- A command that takes a long time (for example, a board-wide send) returns `202 Accepted` with a status URL. React polls the status URL until the work is complete.
+
+### Data refresh in React
+
+- React uses TanStack Query for server data.
+- Query keys start with the capability name. Example: `['enrollments', 'roster', schoolId]`.
+- After a command succeeds, React invalidates the affected query keys. TanStack Query fetches them again.
+- Use optimistic updates only for selected interactions where speed matters. Example: signing a permission slip.
+- TanStack Query fetches data again when the window gets focus. Use polling where a screen needs fresher data.
+
 ## Testing
 
 - Write tests first. Tests prove business behaviour.
 - Test behaviour, not implementation.
+- Test commands through business outcomes, including rejection and conflict cases.
+- Use the real database to test constraints, transactions, and concurrency.
+- Test rules in policies and isolated domain models directly, without the database where possible.
+- When a capability has repositories, test their mappings against the real database.
 - Use request specs for API workflows from end to end.
-- Use unit specs for requests, domain rules, and commands.
+- Use browser tests for important React workflows.
 - Use fakes only at injected boundaries.
 - Tools:
   - Backend: RSpec, FactoryBot, and Rails time helpers (`travel_to`, `freeze_time`).
@@ -158,18 +253,17 @@ Database constraints are the last line of defense.
 
 ## Background jobs
 
-We use Solid Queue. Its tables are in the primary database. Reason: a job is committed or rolled back with the data that schedules it.
+We use Solid Queue. Its tables are in the primary database. Reason: a job is committed or rolled back with the data that enqueues it, so it works as an outbox.
 
 - Use Active Job only. Jobs inherit from `ApplicationJob`. Do not reference `SolidQueue::*` classes or tables in app code. Reason: the backend can change without code changes.
-- A job is a thin delivery adapter. It makes a request from its arguments and calls a command. It contains no business logic.
-- Commands schedule jobs through an injected task scheduler. Example: `task_scheduler.send_notification(notification_id)`. Reason: commands must not reference job classes in the delivery layer.
-- The default task scheduler is in infrastructure. It calls `perform_later` or `perform_all_later`.
-- Tests inject a fake task scheduler and assert what was scheduled.
-- Schedule jobs in the command's transaction. Do not schedule jobs from models or callbacks.
+- A job is thin. It calls a command with its arguments. It contains no business logic.
+- Commands enqueue jobs with `perform_later` or `perform_all_later` in the command's transaction.
+- Do not enqueue jobs from models or callbacks.
 - Keep `enqueue_after_transaction_commit` set to `false`. If it is `true`, jobs are enqueued after commit, so a job and its data are no longer committed together.
+- Specs check enqueued jobs with `have_enqueued_job`.
 - Every job must be idempotent. It must be safe to run two times.
 - Every job must handle a record that is missing or changed. Check the state again before you act.
-- Pass only IDs and primitive values to jobs. Do not pass AR models or large payloads.
+- Pass only IDs and primitive values to jobs. Do not pass Active Record models or large payloads.
 - For a large send (for example, a board-wide notification), use `perform_all_later` in batches. Make one job for each recipient and channel.
 - Define recurring jobs only in `config/recurring.yml`.
 - Use Solid Queue-specific features (`limits_concurrency`, batches) only when necessary. Add a comment that gives the reason.

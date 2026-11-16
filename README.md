@@ -10,7 +10,7 @@ frontend/           React 19 + TypeScript (Vite), React Router, TanStack Query, 
 docker-compose.yml  Local Postgres 18
 mise.toml           Pinned Ruby and Node versions
 Procfile.dev        Processes started by bin/dev
-architecture.md     Backend architecture rules
+architecture.md     Architecture rules
 todo.md             Open decisions and pending work
 docs/guidelines/    Synced copies of shared guidelines (do not edit; see bin/sync-guidelines)
 ```

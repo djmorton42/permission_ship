@@ -8,13 +8,13 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 
 - What is the model: roles, policies, relationship checks (for example, "is this parent linked to this student"), or a mix?
 - Authorization runs in step 3 of the command pipeline. What does that step do?
-- How does a command know the actor? A field on each request, or a separate context argument (`execute(request, context)`)?
+- How does a command or query know the actor? An attribute on each one, or a context argument to `call`?
 - A school administrator who is also a parent: one login with different views, or two accounts?
 
 ### Multi-tenancy
 
 - How do we make sure each query is scoped to the correct board or school? Options:
-  - scope in each repository
+  - scope in each query and command
   - a required tenant in the request context
   - Postgres row-level security
 - How do board-level access and school-level access work together?
@@ -34,9 +34,8 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 
 ### Architecture
 
-- Query read path: do queries always use repositories and domain entities? Or can read-optimized query objects make response DTOs directly?
-- Directory and namespace layout under `app/` for each layer: by layer, by feature, or both?
 - When does "production" start for the migration rules? Proposal: when we have data for the first real school.
+- Which tool enforces capability ownership, and when? For example, `packwerk`.
 
 ### Product and platform
 
@@ -55,13 +54,15 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 - [ ] Make the first git commit.
 - [ ] Commit and push `language.txt` and the `testing.txt` changes in the useful_prompts repo. Then run `bin/sync-guidelines` with no override. Result: `docs/guidelines/SOURCE` records the GitHub URL.
 - [ ] Configure UUIDv7 primary keys: set the generators to `uuid` and set migrations to `default: -> { "uuidv7()" }`.
+- [ ] Turn on `strict_loading_by_default`.
 - [ ] Build the base pieces:
-  - [ ] `UseCaseResult` and `ValidationResult`
-  - [ ] base request class
-  - [ ] base command and base query, with the transaction and rollback helper
-  - [ ] task scheduler, with a fake for tests
+  - [ ] `UseCaseResult`
+  - [ ] `ApplicationCommand`: attributes, validation, the `dependency` helper, the transaction and rollback
+  - [ ] `ApplicationQuery`: attributes, validation, the `dependency` helper, no writes
   - [ ] error rendering in `Api::V1::BaseController`
-- [ ] Build one reference use case from end to end: request, command, repository, domain entity, response DTO, controller, and specs.
+  - [ ] the `app/capabilities/` directory
+- [ ] Build one reference capability from end to end: command, query, model, response DTO, controller, React screen, and specs.
+- [ ] Build `Idempotency-Key` support (storage, controller support, React header) before the first payment or notification command.
 - [ ] Testing setup:
   - [ ] Add Playwright for browser tests of critical user journeys.
   - [ ] Add WebMock and block external network access in specs.
