@@ -58,7 +58,8 @@ Open decisions and pending work. When a decision is made, add it to `architectur
   - [ ] Set `app.organization_id` with `SET LOCAL` in `ApplicationCommand` and `ApplicationQuery`. Run queries in a read-only transaction.
   - [ ] Add a console helper, `with_organization(org) { ... }`.
   - [ ] Add spec support: a tenant helper and a shared isolation example that runs as the app role.
-  - [ ] Write the login lookup database function.
+  - [ ] Create the global `identities` table and link `users` to it.
+  - [ ] Write the database function that lists an identity's organizations.
 - [ ] Build the base pieces:
   - [ ] `UseCaseResult`
   - [ ] `ApplicationCommand`: attributes, validation, the `dependency` helper, the transaction and rollback

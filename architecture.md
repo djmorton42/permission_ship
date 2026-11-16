@@ -34,8 +34,9 @@ Architecture rules for Permishly. Open decisions and pending work are in `todo.m
 - The same code supports one organization per installation or many organizations in one installation.
 - Every tenant-owned table has an `organization_id` column. This includes users.
 - A table whose data belongs to one school also has a `school_id` column.
-- Global tables have no `organization_id`: `organizations` and infrastructure tables (for example, Solid Queue tables).
-- A user belongs to one organization. A person in two organizations has two user accounts.
+- Global tables have no `organization_id`: `organizations`, `identities`, and infrastructure tables (for example, Solid Queue tables).
+- A user belongs to one organization. A person in two organizations has two users, one in each organization, with separate roles and data.
+- A person has one identity for login (see Login).
 - Data does not cross organizations. A student who moves to another organization starts with no history there. (An export and import process is in `todo.md`.)
 - Within an organization, roles and policies control access to schools and to student data. This is authorization, not tenancy. Example: board admins see administrative data, but not individual student data.
 
@@ -60,12 +61,24 @@ Postgres row-level security (RLS) enforces the organization boundary. Reason: a 
 - The schema format is `structure.sql`. Reason: `schema.rb` cannot store RLS policies.
 - Only named platform tools (support scripts, cross-organization reports) use a database role that bypasses RLS.
 
-### Login
+### Identities and login
 
-- Login runs before a tenant is set. It is the only part of the app that looks up users across organizations. It uses a narrow database function, not the RLS bypass role.
-- The user authenticates first, with a password or Google. The server then finds the accounts in all organizations where the credentials match.
-- If one account matches, the user is logged in to it.
-- If more than one account matches, the user picks an organization from those accounts.
+Credentials are in a global `identities` table. Reason: a person has one password, one reset flow, and one MFA setup, and login checks one password.
+
+| Table | Tenant | Contains |
+| --- | --- | --- |
+| `identities` | No (global) | Email, password digest, Google ID, MFA settings, lockout state |
+| `users` | Yes (`organization_id`, RLS) | `identity_id`, name, roles, and all data about the person in that organization |
+
+- `identities` contains only the data needed to authenticate. It contains no tenant data.
+- Only the authentication capability reads or writes `identities`.
+- When an identity has no users, delete it. Example: after an organization is deleted.
+- An export does not include credentials. Users set a new password or accept an invitation in the new installation.
+- Login flow:
+  1. The person authenticates with a password or Google against `identities`.
+  2. The server finds the organizations where the identity has a user. This is the only cross-organization read in the app. It uses a narrow database function, not the RLS bypass role.
+  3. If there is one organization, the person is logged in to it.
+  4. If there is more than one, the person picks an organization.
 - Login never shows organizations before authentication succeeds. Reason: that would reveal which organizations an email address belongs to.
 
 ## Commands
