@@ -9,16 +9,12 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 - What is the model: roles, policies, relationship checks (for example, "is this parent linked to this student"), or a mix?
 - Authorization runs in step 3 of the command pipeline. What does that step do?
 - How does a command or query know the actor? An attribute on each one, or a context argument to `call`?
-- A school administrator who is also a parent: one login with different views, or two accounts?
+- A school administrator who is also a parent in the same organization: one login with different views, or two accounts?
+- Which administrative data can board admins see?
 
 ### Multi-tenancy
 
-- How do we make sure each query is scoped to the correct board or school? Options:
-  - scope in each query and command
-  - a required tenant in the request context
-  - Postgres row-level security
-- How do board-level access and school-level access work together?
-- How do parents see a student's history at previous schools?
+- Export and import: how do we move a student's records, or a whole organization, to another organization or installation?
 
 ### Auditing and history
 
@@ -39,7 +35,7 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 
 ### Product and platform
 
-- Authentication: Rails 8 authentication with OmniAuth for Google? Cookie sessions for web, and tokens for a future mobile app?
+- Authentication: Rails 8 authentication with OmniAuth for Google? Cookie sessions for web, and tokens for a future mobile app? (The login and organization picker rules are in `architecture.md`.)
 - Mobile: a PWA with Web Push first, and React Native (Expo) only if necessary?
 - Real-time updates: `config/cable.yml` uses Redis in production. Choose Solid Cable or Redis when we need real-time updates.
 - Hosting and deployment.
@@ -51,10 +47,18 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 
 ## Actions
 
-- [ ] Make the first git commit.
-- [ ] Commit and push `language.txt` and the `testing.txt` changes in the useful_prompts repo. Then run `bin/sync-guidelines` with no override. Result: `docs/guidelines/SOURCE` records the GitHub URL.
+- [ ] Push the useful_prompts repo. Then run `bin/sync-guidelines` with no override. Result: `docs/guidelines/SOURCE` records the GitHub URL.
 - [ ] Configure UUIDv7 primary keys: set the generators to `uuid` and set migrations to `default: -> { "uuidv7()" }`.
 - [ ] Turn on `strict_loading_by_default`.
+- [ ] Set up multi-tenancy before the first tenant table:
+  - [ ] Create the `organizations` table.
+  - [ ] Create two database roles: an owner role for migrations and an app role that RLS applies to. Do this in local Docker, CI, and production.
+  - [ ] Change the schema format to `structure.sql`.
+  - [ ] Write the RLS migration helper (column, forced RLS, policy, index).
+  - [ ] Set `app.organization_id` with `SET LOCAL` in `ApplicationCommand` and `ApplicationQuery`. Run queries in a read-only transaction.
+  - [ ] Add a console helper, `with_organization(org) { ... }`.
+  - [ ] Add spec support: a tenant helper and a shared isolation example that runs as the app role.
+  - [ ] Write the login lookup database function.
 - [ ] Build the base pieces:
   - [ ] `UseCaseResult`
   - [ ] `ApplicationCommand`: attributes, validation, the `dependency` helper, the transaction and rollback

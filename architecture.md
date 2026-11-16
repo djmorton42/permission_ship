@@ -28,6 +28,46 @@ Architecture rules for Permishly. Open decisions and pending work are in `todo.m
 - Queries can read across capabilities.
 - We enforce ownership by convention. A tool to enforce it is in `todo.md`.
 
+## Multi-tenancy
+
+- An organization is the tenant. A school board is an organization. An independent school is an organization with one school.
+- The same code supports one organization per installation or many organizations in one installation.
+- Every tenant-owned table has an `organization_id` column. This includes users.
+- A table whose data belongs to one school also has a `school_id` column.
+- Global tables have no `organization_id`: `organizations` and infrastructure tables (for example, Solid Queue tables).
+- A user belongs to one organization. A person in two organizations has two user accounts.
+- Data does not cross organizations. A student who moves to another organization starts with no history there. (An export and import process is in `todo.md`.)
+- Within an organization, roles and policies control access to schools and to student data. This is authorization, not tenancy. Example: board admins see administrative data, but not individual student data.
+
+### Row-level security
+
+Postgres row-level security (RLS) enforces the organization boundary. Reason: a query that forgets its tenant filter cannot leak data.
+
+- Every tenant-owned table has RLS enabled and forced, with this policy:
+
+  ```sql
+  USING (organization_id = current_setting('app.organization_id', true)::uuid)
+  ```
+
+  If the tenant is not set, no rows match.
+- Create tenant tables with the RLS migration helper. It adds the column, the policy, and the index.
+- The app connects as a database role that RLS applies to. Migrations run as the table owner.
+- `ApplicationCommand` and `ApplicationQuery` open a transaction and run `SET LOCAL app.organization_id`. The setting ends with the transaction.
+- Queries run in a read-only transaction.
+- Jobs take `organization_id` as an argument and pass it to the command.
+- Foreign keys between tenant tables include `organization_id`. Reason: a row cannot refer to a row in another organization.
+- Indexes on tenant tables start with `organization_id`.
+- The schema format is `structure.sql`. Reason: `schema.rb` cannot store RLS policies.
+- Only named platform tools (support scripts, cross-organization reports) use a database role that bypasses RLS.
+
+### Login
+
+- Login runs before a tenant is set. It is the only part of the app that looks up users across organizations. It uses a narrow database function, not the RLS bypass role.
+- The user authenticates first, with a password or Google. The server then finds the accounts in all organizations where the credentials match.
+- If one account matches, the user is logged in to it.
+- If more than one account matches, the user picks an organization from those accounts.
+- Login never shows organizations before authentication succeeds. Reason: that would reveal which organizations an email address belongs to.
+
 ## Commands
 
 - Every consequential write goes through a command. This includes writes from controllers, jobs, rake tasks, and admin tools.
@@ -236,6 +276,7 @@ Do not add a repository for each table. Do not copy every model into a domain ob
 - Test rules in policies and isolated domain models directly, without the database where possible.
 - When a capability has repositories, test their mappings against the real database.
 - Use request specs for API workflows from end to end.
+- Every query has a tenant isolation test: it returns no rows from another organization. Isolation tests run as the app database role. Reason: the table owner is not subject to RLS, so a test as the owner proves nothing.
 - Use browser tests for important React workflows.
 - Use fakes only at injected boundaries.
 - Tools:
@@ -264,6 +305,7 @@ We use Solid Queue. Its tables are in the primary database. Reason: a job is com
 - Every job must be idempotent. It must be safe to run two times.
 - Every job must handle a record that is missing or changed. Check the state again before you act.
 - Pass only IDs and primitive values to jobs. Do not pass Active Record models or large payloads.
+- Jobs that touch tenant data take `organization_id` as an argument.
 - For a large send (for example, a board-wide notification), use `perform_all_later` in batches. Make one job for each recipient and channel.
 - Define recurring jobs only in `config/recurring.yml`.
 - Use Solid Queue-specific features (`limits_concurrency`, batches) only when necessary. Add a comment that gives the reason.
