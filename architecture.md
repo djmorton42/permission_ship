@@ -22,7 +22,7 @@ Architecture rules for Permishly. Open decisions and pending work are in `todo.m
 ## Capabilities
 
 - Each business capability has a namespace. Examples: `Enrollments`, `FieldTrips`, `Notifications`.
-- Commands, queries, policies, and DTOs live in `app/capabilities/<capability>/`. Example: `app/capabilities/enrollments/enroll_student.rb` defines `Enrollments::EnrollStudent`.
+- Commands, queries, policies, and DTOs live in `app/capabilities/<capability>/`. `UseCaseResult` and shared DTOs (`RecordSummary`) are in `app/lib/`. Example: `app/capabilities/enrollments/enroll_student.rb` defines `Enrollments::EnrollStudent`.
 - Active Record models stay in `app/models`. Each model belongs to one capability.
 - Only a capability's own commands write its models. Other capabilities call its commands. Reason: each piece of state has one owner.
 - Queries can read across capabilities.
@@ -47,19 +47,32 @@ Postgres row-level security (RLS) enforces the organization boundary. Reason: a 
 - Every tenant-owned table has RLS enabled and forced, with this policy:
 
   ```sql
-  USING (organization_id = current_setting('app.organization_id', true)::uuid)
+  USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)
   ```
 
-  If the tenant is not set, no rows match.
-- Create tenant tables with the RLS migration helper. It adds the column, the policy, and the index.
-- The app connects as a database role that RLS applies to. Migrations run as the table owner.
-- `ApplicationCommand` and `ApplicationQuery` open a transaction and run `SET LOCAL app.organization_id`. The setting ends with the transaction.
+  If the tenant is not set, no rows match. `NULLIF`: after a transaction ends, Postgres returns an empty string for the setting.
+- Create tenant tables with `create_tenant_table` (`lib/tenant_tables.rb`). It adds the column, the policy, and the `(organization_id, id)` unique index. Add references between tenant tables with `add_tenant_reference`.
+- `Tenancy.with_organization(org) { ... }` (`lib/tenancy.rb`) sets the tenant for a block, in a transaction. It restores the previous tenant when the block ends. Commands and queries use it. Use it directly only in the console, seeds, and specs.
+- `ApplicationCommand` and `ApplicationQuery` set the tenant from their `organization_id` input. The setting ends with the block.
 - Queries run in a read-only transaction.
 - Jobs take `organization_id` as an argument and pass it to the command.
 - Foreign keys between tenant tables include `organization_id`. Reason: a row cannot refer to a row in another organization.
 - Indexes on tenant tables start with `organization_id`.
 - The schema format is `structure.sql`. Reason: `schema.rb` cannot store RLS policies.
 - Only named platform tools (support scripts, cross-organization reports) use a database role that bypasses RLS.
+
+### Database roles
+
+| Role | Used by | RLS |
+| --- | --- | --- |
+| Owner (`permishly` locally) | `db:` tasks: migrations, schema loads, seeds | Bypasses (superuser locally) |
+| `permishly_app` | The app, jobs, and specs (`primary` in `config/database.yml`) | Applies |
+| `permishly_cross_tenant_reader` | Owns `identity_organization_ids`. Cannot log in. | Bypasses |
+
+- `config/database.yml` has two configs for each database: `primary` (app role, `database_tasks: false`) and `owner`.
+- `db/privileges.sql` creates the roles and grants their privileges. Reason: `structure.sql` does not store privileges or owners. Every statement in it is idempotent.
+- `bin/rails db:privileges` applies the file. It runs after `db:migrate`, `db:schema:load`, `db:prepare`, `db:rollback`, and `db:test:prepare`.
+- When you add a table, the app role gets access the next time the task runs. When you add a database function that needs a special owner or grant, add it to `db/privileges.sql`.
 
 ### Identities and login
 
@@ -75,10 +88,14 @@ Credentials are in a global `identities` table. Reason: a person has one passwor
 - When an identity has no users, delete it. Example: after an organization is deleted.
 - An export does not include credentials. Users set a new password or accept an invitation in the new installation.
 - Login flow:
-  1. The person authenticates with a password or Google against `identities`.
-  2. The server finds the organizations where the identity has a user. This is the only cross-organization read in the app. It uses a narrow database function, not the RLS bypass role.
-  3. If there is one organization, the person is logged in to it.
-  4. If there is more than one, the person picks an organization.
+  1. The person authenticates with a password against `identities` (`POST /api/v1/session`).
+  2. The server finds the organizations where the identity has a user. This is the only cross-organization read in the app. It uses the `identity_organization_ids` database function, not the RLS bypass role.
+  3. If there is one organization, the session is in it.
+  4. If there is more than one, the person picks an organization (`POST /api/v1/session/organization`).
+- `GET /api/v1/session` returns the signed-in user, or the organizations to pick from.
+- `sessions` is a global table. A session has an `identity_id` and an `organization_id`, which is null until the person picks one.
+- The session ID is in a signed, `HttpOnly`, `SameSite=Lax` cookie. Reason: JavaScript cannot read it, and browsers do not send it with cross-site POST requests.
+- Login is rate limited: 10 attempts in 3 minutes for each IP address.
 - Login never shows organizations before authentication succeeds. Reason: that would reveal which organizations an email address belongs to.
 
 ## Commands
@@ -88,8 +105,9 @@ Credentials are in a global `identities` table. Reason: a person has one passwor
 - A workflow usually maps to one command. A command can call other commands.
 - Commands inherit from `ApplicationCommand`.
 - A command declares its inputs with `attribute` and validates them with `validates`.
+- Every command has an `organization_id` input, and it is required. A global command (for example, login) calls `runs_without_organization`.
 - A command declares its dependencies with `dependency` (see Dependencies).
-- `Command.call(inputs, **dependencies)` runs the command and returns a `UseCaseResult`.
+- `Command.call(inputs, **dependencies)` runs the command and returns a `UseCaseResult`. `Command.call(**keywords)` also works: keywords that name a declared dependency are dependencies, and the others are inputs.
 - A command can return data, for example the ID of a new record or a small outcome payload.
 
 ```ruby
@@ -114,7 +132,7 @@ Enrollments::EnrollStudent.call(enroll_params)
 `ApplicationCommand` runs these steps in this order:
 
 1. Validate the inputs. If they are not valid, return a `validation` failure.
-2. Open a transaction (see Transactions).
+2. Open a transaction (see Transactions) and set the tenant.
 3. Call `perform`, which:
    1. loads data;
    2. authorizes the actor (the authorization design is in `todo.md`);
@@ -145,7 +163,7 @@ A command is idempotent when a second run with the same input has no additional 
 - Queries use Active Record or SQL directly.
 - Shape each query for its consumer: joins, aggregates, filters, authorization scope, and pagination.
 - Queries return read models or response DTOs. They never return Active Record models.
-- Queries do not write. `ApplicationQuery` runs `perform` in `ActiveRecord::Base.while_preventing_writes`.
+- Queries do not write. `ApplicationQuery` runs `perform` in `ActiveRecord::Base.while_preventing_writes`, in a read-only transaction. A query inside a command joins the command's transaction, so that transaction is not read-only.
 - A query can call other queries, but not commands.
 
 ```ruby
@@ -167,6 +185,7 @@ Enrollments::RosterQuery.call(school_id:, page:)
   | Category | Meaning | HTTP status |
   | --- | --- | --- |
   | `validation` | Input is not valid, or a business rule rejects it | 422 |
+  | `unauthenticated` | The person is not logged in, or login failed | 401 |
   | `forbidden` | The actor has no permission | 403 |
   | `not_found` | A record is not found | 404 |
   | `conflict` | A concurrent change or a duplicate | 409 |

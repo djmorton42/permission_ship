@@ -31,11 +31,15 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   return body as T
 }
 
-export type Health = {
-  status: string
-  database: boolean
-  jobs: boolean
-  time: string
-}
+// The server's error format. See "Results and errors" in architecture.md.
+export type ApiErrorBody = { errors: { field: string | null; code: string; message: string }[] }
 
-export const getHealth = () => apiFetch<Health>('/health')
+// The first error message in an API error, or the fallback.
+export function errorMessage(error: unknown, fallback: string): string {
+  if (error instanceof ApiError) {
+    const body = error.body as Partial<ApiErrorBody> | null
+    const message = body?.errors?.[0]?.message
+    if (message) return message
+  }
+  return fallback
+}

@@ -1,27 +1,61 @@
 # PostgreSQL runs in Docker locally (see ../docker-compose.yml).
 # Connection settings come from env vars with defaults matching docker-compose.
-# In production, set DATABASE_URL (it takes precedence over the values below).
+#
+# Each environment has two configs for the same database:
+# - primary: the app role. Row-level security applies to it. The app uses it.
+# - owner: the table owner. Database tasks (migrations, schema loads) use it.
+# lib/tasks/database_roles.rake creates the app role and grants its privileges.
 default: &default
   adapter: postgresql
   encoding: unicode
   max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   host: <%= ENV.fetch("DB_HOST", "localhost") %>
   port: <%= ENV.fetch("DB_PORT", 5432) %>
+
+app: &app
+  <<: *default
+  username: <%= ENV.fetch("DB_APP_USERNAME", "permishly_app") %>
+  password: <%= ENV.fetch("DB_APP_PASSWORD", "permishly_app") %>
+  database_tasks: false
+
+owner: &owner
+  <<: *default
   username: <%= ENV.fetch("DB_USERNAME", "permishly") %>
   password: <%= ENV.fetch("DB_PASSWORD", "permishly") %>
+  migrations_paths: db/migrate
+  schema_dump: structure.sql
+  # db:prepare seeds a new database only when its config says so.
+  seeds: true
 
 # gssencmode: disable avoids a libpq segfault on macOS in forked processes
 # (Solid Queue forks its workers). The local Docker Postgres doesn't use GSSAPI.
 development:
-  <<: *default
-  database: permishly_development
-  gssencmode: disable
+  primary:
+    <<: *app
+    database: permishly_development
+    gssencmode: disable
+  owner:
+    <<: *owner
+    database: permishly_development
+    gssencmode: disable
 
 test:
-  <<: *default
-  database: permishly_test
-  gssencmode: disable
+  primary:
+    <<: *app
+    database: permishly_test
+    gssencmode: disable
+  owner:
+    <<: *owner
+    database: permishly_test
+    gssencmode: disable
 
+# In production, set PRIMARY_DATABASE_URL (app role) and OWNER_DATABASE_URL (owner role).
 production:
-  <<: *default
-  database: permishly_production
+  primary:
+    <<: *app
+    database: permishly_production
+    url: <%= ENV["PRIMARY_DATABASE_URL"] %>
+  owner:
+    <<: *owner
+    database: permishly_production
+    url: <%= ENV["OWNER_DATABASE_URL"] %>

@@ -35,7 +35,9 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 
 ### Product and platform
 
-- Authentication: Rails 8 authentication with OmniAuth for Google? Cookie sessions for web, and tokens for a future mobile app? (The login and organization picker rules are in `architecture.md`.)
+- Authentication: OmniAuth for Google? Tokens for a future mobile app? (Password login with cookie sessions is in `architecture.md`.)
+- Sessions: when does a session expire? The cookie is permanent, and the server does not end old sessions.
+- CSRF: `SameSite=Lax` is the only protection for cookie-authenticated writes. Do we also need a CSRF token or an `Origin` check?
 - Mobile: a PWA with Web Push first, and React Native (Expo) only if necessary?
 - Real-time updates: `config/cable.yml` uses Redis in production. Choose Solid Cable or Redis when we need real-time updates.
 - Hosting and deployment.
@@ -48,32 +50,16 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 ## Actions
 
 - [ ] Push the useful_prompts repo. Then run `bin/sync-guidelines` with no override. Result: `docs/guidelines/SOURCE` records the GitHub URL.
-- [ ] Configure UUIDv7 primary keys: set the generators to `uuid` and set migrations to `default: -> { "uuidv7()" }`.
-- [ ] Turn on `strict_loading_by_default`.
-- [ ] Set up multi-tenancy before the first tenant table:
-  - [ ] Create the `organizations` table.
-  - [ ] Create two database roles: an owner role for migrations and an app role that RLS applies to. Do this in local Docker, CI, and production.
-  - [ ] Change the schema format to `structure.sql`.
-  - [ ] Write the RLS migration helper (column, forced RLS, policy, index).
-  - [ ] Set `app.organization_id` with `SET LOCAL` in `ApplicationCommand` and `ApplicationQuery`. Run queries in a read-only transaction.
-  - [ ] Add a console helper, `with_organization(org) { ... }`.
-  - [ ] Add spec support: a tenant helper and a shared isolation example that runs as the app role.
-  - [ ] Create the global `identities` table and link `users` to it.
-  - [ ] Write the database function that lists an identity's organizations.
-- [ ] Build the base pieces:
-  - [ ] `UseCaseResult`
-  - [ ] `ApplicationCommand`: attributes, validation, the `dependency` helper, the transaction and rollback
-  - [ ] `ApplicationQuery`: attributes, validation, the `dependency` helper, no writes
-  - [ ] error rendering in `Api::V1::BaseController`
-  - [ ] the `app/capabilities/` directory
-- [ ] Build one reference capability from end to end: command, query, model, response DTO, controller, React screen, and specs.
+- [ ] Set up the database roles in CI and production. Production needs `PRIMARY_DATABASE_URL` (app role) and `OWNER_DATABASE_URL` (owner role), and a password for `permishly_app`.
+- [ ] Add a shared spec example for tenant isolation, so each query spec does not write its own.
+- [ ] Add commands to create organizations, schools, users and school administrators. Then make `db/seeds/demo.rb` use them.
+- [ ] Add a serializer for response DTOs. DTOs define `as_json` for now.
 - [ ] Build `Idempotency-Key` support (storage, controller support, React header) before the first payment or notification command.
 - [ ] Testing setup:
   - [ ] Add Playwright for browser tests of critical user journeys.
   - [ ] Add WebMock and block external network access in specs.
   - [ ] Include `ActiveSupport::Testing::TimeHelpers` in RSpec.
 - [ ] Add a CI workflow at the repo root. Backend: RSpec, RuboCop, Brakeman, bundler-audit. Frontend: tests, typecheck, lint, build. Optional: `bin/sync-guidelines --check` (CI needs read access to the private useful_prompts repo, for example a deploy key).
-- [ ] Add a time zone column to schools when we make the schools table.
 - [ ] Before production:
   - [ ] Add `strong_migrations` and change the migration rules.
   - [ ] Set Mission Control credentials for `/jobs`.

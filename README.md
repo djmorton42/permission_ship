@@ -29,6 +29,19 @@ bin/dev     # runs Postgres, Rails (:3000), Solid Queue workers and Vite (:5173)
 
 Open http://localhost:5173. Vite proxies `/api` to Rails, so the browser talks to a single origin in development.
 
+## Demo data
+
+In development, `bin/rails db:seed` (and `db:prepare` on a new database) loads the school boards and schools from `etc/demo-school-data.txt`, with one administrator for each school. The password for every demo account is `permishly-demo`.
+
+| Email | Administers |
+| --- | --- |
+| `marsha.deepwater@eldritch-shores.example` | Innsmouth Heights Secondary School |
+| `prudence.form@central-directorate.example` | Compliance Collegiate |
+| `gwendolyn.brightshield@united-realms.example` | Quest Preparatory Academy |
+| `morgan.crossway@example.com` | Schools in two boards (shows the organization picker) |
+
+The full list is in `backend/db/seeds/demo.rb`.
+
 ## Common tasks
 
 | Task                    | Command                                           |
@@ -57,8 +70,12 @@ The backend reads these env vars; the defaults match `docker-compose.yml`:
 | -------------- | -------------------------- |
 | `DB_HOST`      | `localhost`                |
 | `DB_PORT`      | `5432`                     |
-| `DB_USERNAME`  | `permishly`                |
+| `DB_USERNAME`  | `permishly` (owner role, for `db:` tasks) |
 | `DB_PASSWORD`  | `permishly`                |
+| `DB_APP_USERNAME` | `permishly_app` (app role, row-level security applies) |
+| `DB_APP_PASSWORD` | `permishly_app`         |
 | `CORS_ORIGINS` | `http://localhost:5173`    |
 
-In production, set `DATABASE_URL` instead.
+In production, set `PRIMARY_DATABASE_URL` (app role) and `OWNER_DATABASE_URL` (owner role) instead. The database roles are described in `architecture.md`.
+
+`pg_dump` writes `backend/db/structure.sql`. Its major version must be at least the server's (18): `brew install libpq` or `brew upgrade libpq`.

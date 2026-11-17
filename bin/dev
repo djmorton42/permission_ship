@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Start the full local stack: Postgres + Redis (Docker), Rails API, Sidekiq, Vite.
+# Start the full local stack: Postgres (Docker), Rails API, Solid Queue workers, Vite.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

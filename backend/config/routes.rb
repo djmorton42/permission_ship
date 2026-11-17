@@ -9,6 +9,9 @@ Rails.application.routes.draw do
   namespace :api, defaults: { format: :json } do
     namespace :v1 do
       resource :health, only: :show, controller: "health"
+      resource :session, only: %i[show create destroy] do
+        resource :organization, only: :create, controller: "session_organizations"
+      end
     end
   end
 end

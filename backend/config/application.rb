@@ -41,6 +41,15 @@ module Permishly
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
 
+    # Login uses a signed session cookie. API-only apps leave out the cookie middleware.
+    config.middleware.use ActionDispatch::Cookies
+
+    # structure.sql stores row-level security policies. schema.rb cannot.
+    config.active_record.schema_format = :sql
+
+    # Loading stays explicit, and N+1 queries raise errors.
+    config.active_record.strict_loading_by_default = true
+
     # Run Active Job on Solid Queue, stored in the primary database.
     # See "Background jobs" in ../architecture.md before writing jobs.
     config.active_job.queue_adapter = :solid_queue
@@ -52,6 +61,7 @@ module Permishly
 
     # Generate RSpec specs and FactoryBot factories instead of Minitest files.
     config.generators do |g|
+      g.orm :active_record, primary_key_type: :uuid
       g.test_framework :rspec
       g.fixture_replacement :factory_bot, dir: "spec/factories"
     end

@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.."
 echo "== Installing Ruby and Node (mise) =="
 mise install
 
-echo "== Starting Postgres and Redis =="
+echo "== Starting Postgres =="
 docker compose up -d --wait
 
 echo "== Backend dependencies and database =="
