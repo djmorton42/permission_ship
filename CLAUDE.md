@@ -2,6 +2,7 @@
 
 - Architecture rules: `architecture.md`. Open decisions and pending work: `todo.md`. Setup and commands: `README.md`.
 - Writing style for docs and replies: `docs/guidelines/language.txt`. Testing rules: `docs/guidelines/testing.txt`.
+- Never push without explicit permission from the user for that push. Permission for one push does not cover later pushes.
 - Run Ruby and Node through mise, for example `mise exec -- bundle exec rspec`. Reason: the shell may not have the pinned versions.
 
 ## Checks during development
