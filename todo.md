@@ -56,10 +56,9 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 - [ ] Add a serializer for response DTOs. DTOs define `as_json` for now.
 - [ ] Build `Idempotency-Key` support (storage, controller support, React header) before the first payment or notification command.
 - [ ] Testing setup:
-  - [ ] Add Playwright for browser tests of critical user journeys.
   - [ ] Add WebMock and block external network access in specs.
   - [ ] Include `ActiveSupport::Testing::TimeHelpers` in RSpec.
-- [ ] Add a CI workflow at the repo root. Backend: RSpec, RuboCop, Brakeman, bundler-audit. Frontend: tests, typecheck, lint, build. Optional: `bin/sync-guidelines --check` (CI needs read access to the private useful_prompts repo, for example a deploy key).
+- [ ] Add `bin/sync-guidelines --check` to CI. CI needs read access to the private useful_prompts repo (for example, a deploy key).
 - [ ] Before production:
   - [ ] Add `strong_migrations` and change the migration rules.
   - [ ] Set Mission Control credentials for `/jobs`.

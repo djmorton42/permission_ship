@@ -51,6 +51,7 @@ The full list is in `backend/db/seeds/demo.rb`.
 | Backend security scan   | `cd backend && bin/brakeman && bin/bundler-audit` |
 | Frontend tests          | `cd frontend && npm test`                         |
 | Frontend lint / types   | `cd frontend && npm run lint && npm run typecheck`|
+| Browser tests           | `cd frontend && npm run test:e2e` (starts its own Rails and Vite) |
 | Sync guidelines         | `bin/sync-guidelines` (`--check` to verify)       |
 | Stop services           | `docker compose down`                             |
 | Wipe local data         | `docker compose down -v`                          |

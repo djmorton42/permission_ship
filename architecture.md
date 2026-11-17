@@ -314,7 +314,8 @@ Do not add a repository for each table. Do not copy every model into a domain ob
 - Tools:
   - Backend: RSpec, FactoryBot, and Rails time helpers (`travel_to`, `freeze_time`).
   - Frontend: Vitest and Testing Library.
-  - Network blocking, browser, mutation, and property-based tools are in `todo.md`.
+  - Browser: Playwright (`frontend/e2e/*.e2e.ts`). Browser tests run against the real API and the development database with demo data.
+  - Network blocking, mutation, and property-based tools are in `todo.md`.
 - The full guidelines are in `docs/guidelines/testing.txt`.
 
 ## Shared guidelines
