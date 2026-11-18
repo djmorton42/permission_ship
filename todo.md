@@ -36,8 +36,15 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 ### Product and platform
 
 - Authentication: OmniAuth for Google? Tokens for a future mobile app? (Password login with cookie sessions is in `architecture.md`.)
-- Sessions: when does a session expire? The cookie is permanent, and the server does not end old sessions.
-- CSRF: `SameSite=Lax` is the only protection for cookie-authenticated writes. Do we also need a CSRF token or an `Origin` check?
+- Sessions: what are the absolute lifetime and the idle timeout? The cookie is permanent, and the `sessions` table has no expiry. School computers are often shared.
+- CSRF: `SameSite=Lax` is the only protection for cookie-authenticated writes. It does not stop login CSRF: a hostile site can log a victim in to the attacker's account. Proposal: accept only JSON requests and check the `Origin` header on writes. Alternative: a CSRF token.
+- Password rules: minimum length, and a check against breached passwords?
+- MFA: required for administrators? Which method (TOTP, passkeys)?
+- Password reset: who can reset a password? An identity is global, and it can have users in more than one organization. A reset by an administrator of one organization also changes access to the other organizations. Options:
+  - Only the person, with a reset link sent to the identity's email address.
+  - An administrator can send the reset link, but cannot set the password.
+  - An administrator can set the password only when the identity has users in that organization and in no other.
+  - Related: who can change the identity's email address? A change of email address gives control of the identity, so it has the same problem.
 - Mobile: a PWA with Web Push first, and React Native (Expo) only if necessary?
 - Real-time updates: `config/cable.yml` uses Redis in production. Choose Solid Cable or Redis when we need real-time updates.
 - Hosting and deployment.
@@ -59,6 +66,15 @@ Open decisions and pending work. When a decision is made, add it to `architectur
   - [ ] Add WebMock and block external network access in specs.
   - [ ] Include `ActiveSupport::Testing::TimeHelpers` in RSpec.
 - [ ] Add `bin/sync-guidelines --check` to CI. CI needs read access to the private useful_prompts repo (for example, a deploy key).
+- [ ] Authentication security (gaps found after the first login feature):
+  - [ ] Expire sessions on the server (see "Sessions" above). Delete expired session rows with a job.
+  - [ ] Protect against login CSRF (see "CSRF" above).
+  - [ ] Rate limit: also limit by account, not only by IP address. Configure a shared production cache store, because `rate_limit` keeps its counts in `Rails.cache`. Set the trusted proxies, so `request.remote_ip` is the client address.
+  - [ ] CORS: refuse all origins in production when `CORS_ORIGINS` is not set. Now the fallback is `http://localhost:5173` with credentials.
+  - [ ] Password reset (see "Password reset" above).
+  - [ ] End all sessions of an identity when its password changes.
+  - [ ] Audit log of logins, failed logins and logouts (see "Auditing and history").
+  - [ ] Security review by another person (for example, `/security-review` or a pen test) before real student data.
 - [ ] Before production:
   - [ ] Add `strong_migrations` and change the migration rules.
   - [ ] Set Mission Control credentials for `/jobs`.
