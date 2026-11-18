@@ -4,3 +4,6 @@
 !.env.example
 *.local
 .idea/
+
+# Python bytecode (docs/walkthroughs/tools)
+__pycache__/

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a code tutorial. Sticky contents rail on wide screens, one reading column, code figures may run wider than the prose. */
+:root {
+  --bg: #f5f7f8;
+  --surface: #ffffff;
+  --ink: #16212b;
+  --muted: #58656f;
+  --line: #d9e0e4;
+  --accent: #17666e;
+  --accent-soft: #e1efef;
+  --code-bg: #eef2f4;
+  --syn-kw: #8a3a8f;
+  --syn-str: #2d6b1f;
+  --syn-com: #6f7b84;
+  --syn-fn: #1a5a9e;
+  --syn-num: #a4501a;
+  --font-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --font-body: "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1418; --surface: #151d22; --ink: #e3eaee; --muted: #98a6ae; --line: #27333a;
+    --accent: #6cc3c9; --accent-soft: #15302f; --code-bg: #111a1f;
+    --syn-kw: #d59ad9; --syn-str: #9fd38a; --syn-com: #7d8b93; --syn-fn: #8cbcf0; --syn-num: #e9a46f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1418; --surface: #151d22; --ink: #e3eaee; --muted: #98a6ae; --line: #27333a;
+  --accent: #6cc3c9; --accent-soft: #15302f; --code-bg: #111a1f;
+  --syn-kw: #d59ad9; --syn-str: #9fd38a; --syn-com: #7d8b93; --syn-fn: #8cbcf0; --syn-num: #e9a46f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 16px/1.65 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+a { color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+code { font-family: var(--font-mono); font-size: 0.86em; }
+p code, li code, td code, dd code { background: var(--code-bg); padding: 0.08em 0.35em; border-radius: 4px; overflow-wrap: anywhere; }
+
+.page { max-width: 1180px; margin: 0 auto; padding-block: 40px 80px; display: grid; gap: 48px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1000px) { .page { grid-template-columns: 220px minmax(0, 1fr); } }
+
+header.intro { grid-column: 1 / -1; display: grid; gap: 12px; max-width: 760px; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 700 clamp(2rem, 5vw, 3.1rem)/1.05 var(--font-display); margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+.lede { font-size: 1.12rem; color: var(--muted); margin: 0; max-width: 62ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 20px; font: 13px/1.4 var(--font-mono); color: var(--muted); }
+.meta b { color: var(--ink); font-weight: 600; }
+
+nav.toc { align-self: start; }
+@media (min-width: 1000px) { nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); } }
+nav.toc h2 { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+nav.toc a { display: flex; gap: 10px; padding: 5px 8px; border-radius: 6px; text-decoration: none; color: var(--ink); font-size: 14px; line-height: 1.35; }
+nav.toc a:hover { background: var(--accent-soft); }
+nav.toc .n { font: 12px/1.6 var(--font-mono); color: var(--accent); min-width: 1.6em; font-variant-numeric: tabular-nums; }
+@media (max-width: 999px) {
+  nav.toc { border: 1px solid var(--line); border-radius: 10px; padding: 16px; background: var(--surface); }
+  nav.toc ol { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+}
+
+main { min-width: 0; display: grid; gap: 64px; }
+section { min-width: 0; display: grid; gap: 14px; scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 16px); }
+section > p, section > ul, section > h3, section > dl, section > .aside { max-width: 68ch; }
+section h2 { font: 700 1.7rem/1.15 var(--font-display); margin: 0 0 4px; display: flex; gap: 14px; align-items: baseline; text-wrap: balance; }
+section h2 .n { font: 600 0.9rem/1 var(--font-mono); color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 5px 9px; font-variant-numeric: tabular-nums; flex: none; }
+section h3 { font: 600 1.1rem/1.3 var(--font-display); margin: 12px 0 0; }
+section p, section ul { margin: 0; }
+section ul { padding-left: 1.2em; display: grid; gap: 8px; }
+.aside { color: var(--muted); font-size: 0.92rem; }
+
+figure.code { margin: 6px 0; border: 1px solid var(--line); border-radius: 10px; background: var(--code-bg); min-width: 0; overflow: hidden; }
+figure.code figcaption { padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--surface); font: 12.5px/1.4 var(--font-mono); color: var(--muted); overflow-wrap: anywhere; }
+figure.code .scroll { overflow-x: auto; }
+figure.code pre { margin: 0; padding: 14px 16px; }
+figure.code pre code { font-size: 13px; line-height: 1.6; background: none; padding: 0; white-space: pre; display: block; color: var(--ink); }
+.code-note { margin: 0; padding: 10px 14px; border-top: 1px solid var(--line); background: var(--accent-soft); font-size: 0.92rem; }
+
+.table { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.93rem; }
+th, td { text-align: left; vertical-align: top; padding: 9px 14px; border-bottom: 1px solid var(--line); }
+th { font: 600 12px/1.3 var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+tbody tr:last-child td { border-bottom: none; }
+tbody.num td:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+pre.mermaid { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; overflow-x: auto; margin: 0; }
+
+dl.traps { margin: 0; display: grid; gap: 14px; }
+dl.traps dt { font-weight: 600; }
+dl.traps dd { margin: 2px 0 0; color: var(--muted); }
+
+.hljs-keyword, .hljs-built_in, .hljs-literal, .hljs-selector-tag, .hljs-meta .hljs-keyword { color: var(--syn-kw); }
+.hljs-string, .hljs-regexp, .hljs-symbol, .hljs-attr + .hljs-string { color: var(--syn-str); }
+.hljs-comment, .hljs-quote { color: var(--syn-com); font-style: italic; }
+.hljs-title, .hljs-title.function_, .hljs-title.class_, .hljs-function .hljs-title { color: var(--syn-fn); }
+.hljs-number, .hljs-variable, .hljs-template-variable, .hljs-type, .hljs-attr, .hljs-attribute { color: var(--syn-num); }
+.hljs-tag, .hljs-name { color: var(--syn-fn); }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+
+<div class="page">
+{{HEADER}}
+  <nav class="toc" aria-label="Contents">
+    <h2>Contents</h2>
+    <ol>{{TOC}}</ol>
+  </nav>
+  <main>{{BODY}}</main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+  try {
+    document.querySelectorAll('pre code[class*="language-tsx"]').forEach(function (el) {
+      el.classList.remove('language-tsx'); el.classList.add('language-typescript');
+    });
+    if (window.hljs) document.querySelectorAll('figure.code pre code').forEach(function (el) { window.hljs.highlightElement(el); });
+  } catch (e) { /* plain code is still readable */ }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+  try {
+    if (window.mermaid) {
+      var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      window.mermaid.initialize({ startOnLoad: true, theme: dark ? "dark" : "default" });
+    }
+  } catch (e) { /* the diagram source is still readable */ }
+</script>
+</body>
+</html>
