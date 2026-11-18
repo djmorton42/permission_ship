@@ -13,6 +13,7 @@ Procfile.dev        Processes started by bin/dev
 architecture.md     Architecture rules
 todo.md             Open decisions and pending work
 docs/guidelines/    Synced copies of shared guidelines (do not edit; see bin/sync-guidelines)
+docs/walkthroughs/  HTML tutorials that explain the code of a feature
 ```
 
 ## Prerequisites

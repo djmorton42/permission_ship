@@ -1,0 +1,1207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Permishly Login Walkthrough</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a code tutorial. Sticky contents rail on wide screens, one reading column, code figures may run wider than the prose. */
+:root {
+  --bg: #f5f7f8;
+  --surface: #ffffff;
+  --ink: #16212b;
+  --muted: #58656f;
+  --line: #d9e0e4;
+  --accent: #17666e;
+  --accent-soft: #e1efef;
+  --code-bg: #eef2f4;
+  --syn-kw: #8a3a8f;
+  --syn-str: #2d6b1f;
+  --syn-com: #6f7b84;
+  --syn-fn: #1a5a9e;
+  --syn-num: #a4501a;
+  --font-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --font-body: "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1418; --surface: #151d22; --ink: #e3eaee; --muted: #98a6ae; --line: #27333a;
+    --accent: #6cc3c9; --accent-soft: #15302f; --code-bg: #111a1f;
+    --syn-kw: #d59ad9; --syn-str: #9fd38a; --syn-com: #7d8b93; --syn-fn: #8cbcf0; --syn-num: #e9a46f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1418; --surface: #151d22; --ink: #e3eaee; --muted: #98a6ae; --line: #27333a;
+  --accent: #6cc3c9; --accent-soft: #15302f; --code-bg: #111a1f;
+  --syn-kw: #d59ad9; --syn-str: #9fd38a; --syn-com: #7d8b93; --syn-fn: #8cbcf0; --syn-num: #e9a46f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 16px/1.65 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+a { color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+code { font-family: var(--font-mono); font-size: 0.86em; }
+p code, li code, td code, dd code { background: var(--code-bg); padding: 0.08em 0.35em; border-radius: 4px; overflow-wrap: anywhere; }
+
+.page { max-width: 1180px; margin: 0 auto; padding-block: 40px 80px; display: grid; gap: 48px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1000px) { .page { grid-template-columns: 220px minmax(0, 1fr); } }
+
+header.intro { grid-column: 1 / -1; display: grid; gap: 12px; max-width: 760px; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 700 clamp(2rem, 5vw, 3.1rem)/1.05 var(--font-display); margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+.lede { font-size: 1.12rem; color: var(--muted); margin: 0; max-width: 62ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 20px; font: 13px/1.4 var(--font-mono); color: var(--muted); }
+.meta b { color: var(--ink); font-weight: 600; }
+
+nav.toc { align-self: start; }
+@media (min-width: 1000px) { nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); } }
+nav.toc h2 { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+nav.toc a { display: flex; gap: 10px; padding: 5px 8px; border-radius: 6px; text-decoration: none; color: var(--ink); font-size: 14px; line-height: 1.35; }
+nav.toc a:hover { background: var(--accent-soft); }
+nav.toc .n { font: 12px/1.6 var(--font-mono); color: var(--accent); min-width: 1.6em; font-variant-numeric: tabular-nums; }
+@media (max-width: 999px) {
+  nav.toc { border: 1px solid var(--line); border-radius: 10px; padding: 16px; background: var(--surface); }
+  nav.toc ol { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+}
+
+main { min-width: 0; display: grid; gap: 64px; }
+section { min-width: 0; display: grid; gap: 14px; scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 16px); }
+section > p, section > ul, section > h3, section > dl, section > .aside { max-width: 68ch; }
+section h2 { font: 700 1.7rem/1.15 var(--font-display); margin: 0 0 4px; display: flex; gap: 14px; align-items: baseline; text-wrap: balance; }
+section h2 .n { font: 600 0.9rem/1 var(--font-mono); color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 5px 9px; font-variant-numeric: tabular-nums; flex: none; }
+section h3 { font: 600 1.1rem/1.3 var(--font-display); margin: 12px 0 0; }
+section p, section ul { margin: 0; }
+section ul { padding-left: 1.2em; display: grid; gap: 8px; }
+.aside { color: var(--muted); font-size: 0.92rem; }
+
+figure.code { margin: 6px 0; border: 1px solid var(--line); border-radius: 10px; background: var(--code-bg); min-width: 0; overflow: hidden; }
+figure.code figcaption { padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--surface); font: 12.5px/1.4 var(--font-mono); color: var(--muted); overflow-wrap: anywhere; }
+figure.code .scroll { overflow-x: auto; }
+figure.code pre { margin: 0; padding: 14px 16px; }
+figure.code pre code { font-size: 13px; line-height: 1.6; background: none; padding: 0; white-space: pre; display: block; color: var(--ink); }
+.code-note { margin: 0; padding: 10px 14px; border-top: 1px solid var(--line); background: var(--accent-soft); font-size: 0.92rem; }
+
+.table { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.93rem; }
+th, td { text-align: left; vertical-align: top; padding: 9px 14px; border-bottom: 1px solid var(--line); }
+th { font: 600 12px/1.3 var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+tbody tr:last-child td { border-bottom: none; }
+tbody.num td:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+pre.mermaid { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; overflow-x: auto; margin: 0; }
+
+dl.traps { margin: 0; display: grid; gap: 14px; }
+dl.traps dt { font-weight: 600; }
+dl.traps dd { margin: 2px 0 0; color: var(--muted); }
+
+.hljs-keyword, .hljs-built_in, .hljs-literal, .hljs-selector-tag, .hljs-meta .hljs-keyword { color: var(--syn-kw); }
+.hljs-string, .hljs-regexp, .hljs-symbol, .hljs-attr + .hljs-string { color: var(--syn-str); }
+.hljs-comment, .hljs-quote { color: var(--syn-com); font-style: italic; }
+.hljs-title, .hljs-title.function_, .hljs-title.class_, .hljs-function .hljs-title { color: var(--syn-fn); }
+.hljs-number, .hljs-variable, .hljs-template-variable, .hljs-type, .hljs-attr, .hljs-attribute { color: var(--syn-num); }
+.hljs-tag, .hljs-name { color: var(--syn-fn); }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header class="intro">
+    <span class="eyebrow">Code walkthrough</span>
+    <h1>How school administrator login works</h1>
+    <p class="lede">What the first Permishly feature added, layer by layer, and why each part is there: row-level security, database roles, commands and queries, the session API, and the React screens.</p>
+    <div class="meta"><span>Commit <b>1d1b10b</b></span><span><b>64</b> files</span><span><b>34</b> backend specs · <b>6</b> frontend tests</span></div>
+  </header>
+  <nav class="toc" aria-label="Contents">
+    <h2>Contents</h2>
+    <ol><li><a href="#overview"><span class="n">0</span>What we built</a></li>
+<li><a href="#tables"><span class="n">1</span>The tables</a></li>
+<li><a href="#rls"><span class="n">2</span>Row-level security</a></li>
+<li><a href="#roles"><span class="n">3</span>Database roles</a></li>
+<li><a href="#tenancy"><span class="n">4</span>Setting the current board</a></li>
+<li><a href="#lookup"><span class="n">5</span>The one read across boards</a></li>
+<li><a href="#base"><span class="n">6</span>Commands, queries and results</a></li>
+<li><a href="#auth"><span class="n">7</span>The login logic</a></li>
+<li><a href="#http"><span class="n">8</span>The HTTP layer</a></li>
+<li><a href="#react"><span class="n">9</span>The React side</a></li>
+<li><a href="#demo"><span class="n">10</span>Demo data</a></li>
+<li><a href="#tests"><span class="n">11</span>How the tests prove it</a></li>
+<li><a href="#traps"><span class="n">12</span>Traps worth knowing</a></li>
+<li><a href="#next"><span class="n">13</span>Not done yet</a></li></ol>
+  </nav>
+  <main><section id="overview"><h2><span class="n">0</span>What we built</h2>
+<p>A school administrator can open Permishly, log in with an email and password, and see their school board and the schools they run. The boards and schools are demo data that the seeds load. There is no screen to create them yet.</p>
+<p>Most of the code is not the login form. Permishly is multi-tenant: one installation serves many school boards, and data from one board must never reach another. <code>architecture.md</code> says this must be in place before the first table that holds board data. The users table is such a table, so login had to be built on top of that foundation.</p>
+<p>The walkthrough follows the layers in the order a request passes through them, from the database up to React. Each part says what the code does and why it is there.</p>
+
+<h3>The request path for login</h3>
+<pre class="mermaid">
+sequenceDiagram
+  participant B as Browser (React)
+  participant C as SessionsController
+  participant L as Authentication::LogIn
+  participant D as Postgres
+  B->>C: POST /api/v1/session {email, password}
+  C->>L: call(email, password, ip, user agent)
+  L->>D: find identity, check password
+  L->>D: identity_organization_ids(identity)
+  L->>D: INSERT session (organization if only one)
+  L-->>C: success(session_id)
+  C-->>B: 204 + signed session cookie
+  B->>C: GET /api/v1/session
+  C->>D: CurrentSessionQuery → CurrentUserQuery (tenant set)
+  C-->>B: signed_in, or organization_required
+</pre>
+
+<h3>The parts</h3>
+<div class="table"><table>
+<thead><tr><th>Layer</th><th>Files</th><th>Job</th></tr></thead>
+<tbody>
+<tr><td>Tables</td><td><code>db/migrate/*</code>, <code>app/models/*</code></td><td>Organizations, identities, schools, users, school administrators, sessions</td></tr>
+<tr><td>Tenant isolation</td><td><code>lib/tenant_tables.rb</code>, <code>lib/tenancy.rb</code></td><td>Row-level security policies, and the helper that sets the current board</td></tr>
+<tr><td>Database roles</td><td><code>config/database.yml</code>, <code>db/privileges.sql</code>, <code>lib/tasks/database_privileges.rake</code></td><td>The app connects as a role that the policies apply to</td></tr>
+<tr><td>Base classes</td><td><code>app/lib/use_case*.rb</code>, <code>app/capabilities/application_*.rb</code></td><td>Commands (writes) and queries (reads), with results instead of exceptions</td></tr>
+<tr><td>Login logic</td><td><code>app/capabilities/authentication/*</code>, <code>accounts/*</code></td><td>Log in, pick a board, log out, read the current session</td></tr>
+<tr><td>HTTP</td><td><code>app/controllers/api/v1/*</code>, <code>concerns/session_cookie.rb</code></td><td>Map results to status codes, set the cookie, rate limit</td></tr>
+<tr><td>React</td><td><code>frontend/src/features/authentication/*</code>, <code>pages/HomePage.tsx</code></td><td>Login form, board picker, signed-in page, log out</td></tr>
+<tr><td>Demo data</td><td><code>db/seeds/demo.rb</code></td><td>Three boards, nine schools, ten administrator accounts</td></tr>
+</tbody></table></div>
+<p class="aside">All paths below start in the repo root. Backend paths start with <code>backend/</code>. The code is quoted from commit <code>1d1b10b</code>.</p>
+</section>
+<section id="tables"><h2><span class="n">1</span>The tables</h2>
+<p>Two kinds of table exist. A <strong>global</strong> table has no board column and is shared by the whole installation. A <strong>tenant</strong> table has an <code>organization_id</code> column, and each row belongs to one board.</p>
+<div class="table"><table>
+<thead><tr><th>Table</th><th>Kind</th><th>Holds</th></tr></thead>
+<tbody>
+<tr><td><code>organizations</code></td><td>Global</td><td>A school board (or an independent school). This is the tenant.</td></tr>
+<tr><td><code>identities</code></td><td>Global</td><td>Email and password digest. One per person.</td></tr>
+<tr><td><code>sessions</code></td><td>Global</td><td>A login. The identity, and the board picked (null until picked).</td></tr>
+<tr><td><code>schools</code></td><td>Tenant</td><td>Name and IANA time zone.</td></tr>
+<tr><td><code>users</code></td><td>Tenant</td><td>The person inside one board: name, and the identity they log in with.</td></tr>
+<tr><td><code>school_administrators</code></td><td>Tenant</td><td>Which user runs which school.</td></tr>
+</tbody></table></div>
+<p>Why split <code>identities</code> from <code>users</code>? A person can work in two boards. They should have one password, but two separate sets of data and roles. So the password lives once, globally, and each board has its own user row that points to the identity.</p>
+<figure class="code"><figcaption><span class="path">backend/db/migrate/20261117000004_create_users.rb</span></figcaption><div class="scroll"><pre><code class="language-ruby">class CreateUsers &lt; ActiveRecord::Migration[8.1]
+  include TenantTables
+
+  def change
+    create_tenant_table :users do |t|
+      t.references :identity, type: :uuid, null: false, foreign_key: true, index: false
+      t.string :name, null: false
+    end
+    # A person has at most one user in each organization.
+    add_index :users, [ :organization_id, :identity_id ], unique: true
+    # Login lists an identity&#x27;s organizations.
+    add_index :users, :identity_id
+  end
+end</code></pre></div></figure>
+<p>The unique index on <code>(organization_id, identity_id)</code> means a person has at most one user in each board. The index on <code>identity_id</code> alone serves the login lookup in part 5.</p>
+<p>Every table uses a UUIDv7 primary key from Postgres's <code>uuidv7()</code>. Nobody can guess the next ID, and the IDs still sort by creation time.</p>
+<figure class="code"><figcaption><span class="path">backend/db/migrate/20261117000002_create_identities.rb</span></figcaption><div class="scroll"><pre><code class="language-ruby">class CreateIdentities &lt; ActiveRecord::Migration[8.1]
+  def change
+    create_table :identities, id: :uuid, default: -&gt; { &quot;uuidv7()&quot; } do |t|
+      t.string :email, null: false
+      t.string :password_digest, null: false
+      t.timestamps
+    end
+    add_index :identities, :email, unique: true
+    add_check_constraint :identities, &quot;email = lower(email)&quot;, name: &quot;identities_email_lowercase&quot;
+  end
+end</code></pre></div><p class="code-note">The check constraint backs up the model's <code>normalizes :email</code>: the database refuses an email with capitals even if some code skips the model.</p></figure>
+</section>
+<section id="rls"><h2><span class="n">2</span>Row-level security</h2>
+<p>Postgres row-level security (RLS) lets a table carry a filter that the database applies to every query. We use it so that a query that forgets <code>WHERE organization_id = …</code> still cannot see another board's rows.</p>
+<p>Every tenant table is created with one helper, so no table can be made without the policy:</p>
+<figure class="code"><figcaption><span class="path">backend/lib/tenant_tables.rb</span></figcaption><div class="scroll"><pre><code class="language-ruby"># Migration helpers for tenant-owned tables. See &quot;Multi-tenancy&quot; in ../architecture.md.
+#
+#   class CreateSchools &lt; ActiveRecord::Migration[8.1]
+#     include TenantTables
+#
+#     def change
+#       create_tenant_table :schools do |t|
+#         t.string :name, null: false
+#       end
+#     end
+#   end
+module TenantTables
+  # Creates a table with a UUIDv7 primary key, an organization_id column, and a
+  # forced row-level security policy for the current tenant.
+  def create_tenant_table(table, **options)
+    create_table(table, id: :uuid, default: -&gt; { &quot;uuidv7()&quot; }, **options) do |t|
+      t.references :organization, type: :uuid, null: false, foreign_key: true, index: false
+      yield t if block_given?
+      t.timestamps
+    end
+
+    # Other tenant tables refer to (organization_id, id). See add_tenant_reference.
+    add_index table, [ :organization_id, :id ], unique: true
+
+    reversible do |direction|
+      direction.up { enable_tenant_isolation(table) }
+    end
+  end
+
+  # Rows are visible and writable only when organization_id matches
+  # app.organization_id (see lib/tenancy.rb). NULLIF: Postgres returns an empty
+  # string for a setting that a transaction set and then ended. If the tenant
+  # is not set, no rows match.
+  def enable_tenant_isolation(table)
+    execute &lt;&lt;~SQL
+      ALTER TABLE #{table} ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE #{table} FORCE ROW LEVEL SECURITY;
+      CREATE POLICY tenant_isolation ON #{table}
+        USING (organization_id = NULLIF(current_setting(&#x27;app.organization_id&#x27;, true), &#x27;&#x27;)::uuid);
+    SQL
+  end
+
+  # Adds &lt;name&gt;_id and a foreign key on (organization_id, &lt;name&gt;_id).
+  # Reason: a row cannot refer to a row in another organization.
+  def add_tenant_reference(table, name, to_table: name.to_s.pluralize, null: false)
+    column = :&quot;#{name}_id&quot;
+    add_column table, column, :uuid, null: null
+    add_index table, [ :organization_id, column ]
+    add_foreign_key table, to_table, column: [ :organization_id, column ], primary_key: [ :organization_id, :id ]
+  end
+end</code></pre></div></figure>
+<p>What each part is for:</p>
+<ul>
+<li><strong><code>ENABLE</code> and <code>FORCE ROW LEVEL SECURITY</code>.</strong> Enable turns the policy on. Force applies it to the table owner too. Without force, the owner sees all rows.</li>
+<li><strong>The policy.</strong> A row is visible, and writable, only when its <code>organization_id</code> equals the session setting <code>app.organization_id</code>. The policy has no separate <code>WITH CHECK</code>, so Postgres uses the same rule for inserts and updates. You cannot write a row for another board.</li>
+<li><strong><code>NULLIF(…, '')</code>.</strong> After a transaction that set the value ends, Postgres returns an empty string for it, not null. <code>''::uuid</code> raises an error. With <code>NULLIF</code> the comparison is against null, so no rows match. The rule is: <em>no board set means no rows</em>.</li>
+<li><strong>The <code>(organization_id, id)</code> unique index</strong> lets other tenant tables point at a row by board and ID together.</li>
+<li><strong><code>add_tenant_reference</code></strong> makes a composite foreign key on <code>(organization_id, school_id)</code>. A school administrator row in board A cannot point to a school in board B, because the pair (A, school-in-B) does not exist.</li>
+</ul>
+<figure class="code"><figcaption><span class="path">backend/db/migrate/20261117000005_create_school_administrators.rb</span></figcaption><div class="scroll"><pre><code class="language-ruby">class CreateSchoolAdministrators &lt; ActiveRecord::Migration[8.1]
+  include TenantTables
+
+  def change
+    create_tenant_table :school_administrators
+    add_tenant_reference :school_administrators, :school
+    add_tenant_reference :school_administrators, :user
+    add_index :school_administrators, [ :organization_id, :school_id, :user_id ], unique: true
+  end
+end</code></pre></div></figure>
+<p>The schema file is <code>db/structure.sql</code>, not <code>schema.rb</code>, because <code>schema.rb</code> cannot store policies. <code>config/application.rb</code> sets this, and also turns on <code>strict_loading_by_default</code>, so associations must be loaded explicitly and N+1 queries raise errors:</p>
+<figure class="code"><figcaption><span class="path">backend/config/application.rb · from line 44</span></figcaption><div class="scroll"><pre><code class="language-ruby">    # Login uses a signed session cookie. API-only apps leave out the cookie middleware.
+    config.middleware.use ActionDispatch::Cookies
+
+    # structure.sql stores row-level security policies. schema.rb cannot.
+    config.active_record.schema_format = :sql
+
+    # Loading stays explicit, and N+1 queries raise errors.
+    config.active_record.strict_loading_by_default = true</code></pre></div></figure>
+</section>
+<section id="roles"><h2><span class="n">3</span>Database roles</h2>
+<p>RLS has one large hole: a superuser, or any role with <code>BYPASSRLS</code>, ignores every policy. The Docker Postgres user <code>permishly</code> is a superuser. If the app connected as that user, all the policies above would do nothing.</p>
+<p>So there are three roles:</p>
+<div class="table"><table>
+<thead><tr><th>Role</th><th>Used by</th><th>RLS</th></tr></thead>
+<tbody>
+<tr><td><code>permishly</code> (owner)</td><td>Migrations, schema loads, seeds</td><td>Bypasses</td></tr>
+<tr><td><code>permishly_app</code></td><td>The running app, job workers, and the specs</td><td>Applies</td></tr>
+<tr><td><code>permishly_cross_tenant_reader</code></td><td>Owns the one function that reads across boards (part 5). Cannot log in.</td><td>Bypasses</td></tr>
+</tbody></table></div>
+<p><code>config/database.yml</code> has two configs for each database. Rails connects the app to <code>primary</code>, the app role. <code>database_tasks: false</code> tells Rails not to run migrations through it. The <code>owner</code> config is the one migrations use.</p>
+<figure class="code"><figcaption><span class="path">backend/config/database.yml · from line 8</span></figcaption><div class="scroll"><pre><code class="language-yaml">default: &amp;default
+  adapter: postgresql
+  encoding: unicode
+  max_connections: &lt;%= ENV.fetch(&quot;RAILS_MAX_THREADS&quot;) { 5 } %&gt;
+  host: &lt;%= ENV.fetch(&quot;DB_HOST&quot;, &quot;localhost&quot;) %&gt;
+  port: &lt;%= ENV.fetch(&quot;DB_PORT&quot;, 5432) %&gt;
+
+app: &amp;app
+  &lt;&lt;: *default
+  username: &lt;%= ENV.fetch(&quot;DB_APP_USERNAME&quot;, &quot;permishly_app&quot;) %&gt;
+  password: &lt;%= ENV.fetch(&quot;DB_APP_PASSWORD&quot;, &quot;permishly_app&quot;) %&gt;
+  database_tasks: false
+
+owner: &amp;owner
+  &lt;&lt;: *default
+  username: &lt;%= ENV.fetch(&quot;DB_USERNAME&quot;, &quot;permishly&quot;) %&gt;
+  password: &lt;%= ENV.fetch(&quot;DB_PASSWORD&quot;, &quot;permishly&quot;) %&gt;
+  migrations_paths: db/migrate
+  schema_dump: structure.sql
+  # db:prepare seeds a new database only when its config says so.
+  seeds: true</code></pre></div><p class="code-note"><code>seeds: true</code> is needed because Rails only seeds the <code>primary</code> config by default, and <code>primary</code> no longer runs database tasks.</p></figure>
+<p>The app role needs <code>GRANT</code>s on every table. Rails writes <code>structure.sql</code> with <code>pg_dump --no-privileges --no-owner</code>, and those flags are hard-coded. Grants put in a migration would be lost the next time someone loads the schema. So the grants live in their own file, written so that it is safe to run again and again:</p>
+<figure class="code"><figcaption><span class="path">backend/db/privileges.sql</span></figcaption><div class="scroll"><pre><code class="language-sql">-- Database roles and privileges. Applied by `bin/rails db:privileges`, which runs
+-- after db:migrate, db:schema:load, db:prepare and db:test:prepare.
+-- structure.sql does not store privileges or owners, so they are here.
+-- Every statement must be idempotent.
+
+-- The app connects as permishly_app. Row-level security applies to it.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = &#x27;permishly_app&#x27;) THEN
+    CREATE ROLE permishly_app LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
+  END IF;
+  -- Owns functions that read across organizations (see identity_organization_ids).
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = &#x27;permishly_cross_tenant_reader&#x27;) THEN
+    CREATE ROLE permishly_cross_tenant_reader NOLOGIN BYPASSRLS;
+  END IF;
+END
+$$;
+
+GRANT USAGE ON SCHEMA public TO permishly_app, permishly_cross_tenant_reader;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO permishly_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO permishly_app;
+
+-- Login: list the organizations where an identity has a user.
+GRANT CREATE ON SCHEMA public TO permishly_cross_tenant_reader;
+GRANT SELECT (identity_id, organization_id) ON users TO permishly_cross_tenant_reader;
+ALTER FUNCTION identity_organization_ids(uuid) OWNER TO permishly_cross_tenant_reader;
+REVOKE ALL ON FUNCTION identity_organization_ids(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION identity_organization_ids(uuid) TO permishly_app;</code></pre></div></figure>
+<p>A rake file applies it after every task that changes the schema. It also fixes a trap: some Rails tasks, for example <code>db:migrate:redo</code>, use the default <code>ActiveRecord::Base</code> connection, which is now the app role. The app role cannot change the schema, so the first block below points all <code>db:</code> tasks at the owner.</p>
+<figure class="code"><figcaption><span class="path">backend/lib/tasks/database_privileges.rake</span></figcaption><div class="scroll"><pre><code class="language-ruby"># Database tasks run as the owner role. See config/database.yml.
+#
+# Some tasks (for example db:migrate:redo) use ActiveRecord::Base, which
+# connects as the app role. The app role cannot change the schema, so every
+# db: task connects ActiveRecord::Base as the owner.
+Rake::Task[&quot;db:load_config&quot;].enhance do
+  owner = ActiveRecord::Base.configurations.configs_for(env_name: ActiveRecord::Tasks::DatabaseTasks.env, name: &quot;owner&quot;)
+  ActiveRecord::Base.establish_connection(owner) if owner
+end
+
+# db/privileges.sql grants the app role its privileges.
+namespace :db do
+  desc &quot;Create the database roles and grant their privileges (db/privileges.sql)&quot;
+  task privileges: :load_config do
+    DatabasePrivileges.apply(ActiveRecord::Tasks::DatabaseTasks.env)
+  end
+
+  namespace :test do
+    task privileges: :load_config do
+      DatabasePrivileges.apply(&quot;test&quot;)
+    end
+  end
+end
+
+module DatabasePrivileges
+  SQL_FILE = Rails.root.join(&quot;db/privileges.sql&quot;)
+
+  def self.apply(env)
+    ActiveRecord::Base.configurations.configs_for(env_name: env, name: &quot;owner&quot;).then do |config|
+      next unless config
+
+      hash = config.configuration_hash
+      connection = PG.connect(
+        host: hash[:host], port: hash[:port], user: hash[:username], password: hash[:password],
+        dbname: hash[:database], gssencmode: hash[:gssencmode] || &quot;prefer&quot;
+      )
+      begin
+        connection.exec(SQL_FILE.read)
+        set_local_app_password(connection, env)
+      ensure
+        connection.close
+      end
+    end
+  end
+
+  # Local environments set a known password. Other environments set it outside the app.
+  def self.set_local_app_password(connection, env)
+    return unless %w[development test].include?(env)
+
+    app = ActiveRecord::Base.configurations.configs_for(env_name: env, name: &quot;primary&quot;, include_hidden: true).configuration_hash
+    connection.exec(&quot;ALTER ROLE #{connection.quote_ident(app[:username])} &quot; \
+                    &quot;PASSWORD #{connection.escape_literal(app[:password])}&quot;)
+  end
+end
+
+%w[db:migrate db:schema:load db:prepare db:rollback].each do |name|
+  Rake::Task[name].enhance { Rake::Task[&quot;db:privileges&quot;].execute }
+end
+Rake::Task[&quot;db:test:prepare&quot;].enhance { Rake::Task[&quot;db:test:privileges&quot;].execute }</code></pre></div></figure>
+</section>
+<section id="tenancy"><h2><span class="n">4</span>Setting the current board</h2>
+<p>The policy reads <code>app.organization_id</code>. Something has to set it. <code>Tenancy.with_organization</code> sets it for one block of code:</p>
+<figure class="code"><figcaption><span class="path">backend/lib/tenancy.rb</span></figcaption><div class="scroll"><pre><code class="language-ruby"># Sets the tenant for row-level security. See &quot;Multi-tenancy&quot; in ../architecture.md.
+#
+#   Tenancy.with_organization(organization) { School.count }
+#
+# Commands and queries call this. Use it directly only in the console, seeds and specs.
+module Tenancy
+  SETTING = &quot;app.organization_id&quot;.freeze
+
+  # Runs the block in a transaction with the tenant set. The previous tenant is
+  # restored when the block ends, so the setting does not leak into an outer transaction.
+  def self.with_organization(organization)
+    organization_id = organization.respond_to?(:id) ? organization.id : organization
+    raise ArgumentError, &quot;organization is required&quot; if organization_id.blank?
+
+    ApplicationRecord.transaction do
+      previous = current_organization_id
+      set(organization_id)
+      begin
+        yield
+      ensure
+        restore(previous)
+      end
+    end
+  end
+
+  def self.current_organization_id
+    ApplicationRecord.connection.select_value(&quot;SELECT current_setting(&#x27;#{SETTING}&#x27;, true)&quot;).presence
+  end
+
+  def self.set(organization_id)
+    ApplicationRecord.connection.select_value(
+      ApplicationRecord.sanitize_sql_array([ &quot;SELECT set_config(?, ?, true)&quot;, SETTING, organization_id.to_s ])
+    )
+  end
+
+  # After a database error the transaction is aborted, and Postgres rejects every
+  # statement. The rollback then drops the setting, so there is nothing to restore.
+  def self.restore(organization_id)
+    set(organization_id)
+  rescue ActiveRecord::StatementInvalid =&gt; error
+    raise unless error.cause.is_a?(PG::InFailedSqlTransaction)
+  end
+
+  private_class_method :set, :restore
+end</code></pre></div></figure>
+<ul>
+<li><strong><code>set_config(…, true)</code></strong> is the function form of <code>SET LOCAL</code>. The value lasts only until the transaction ends. That is why the block runs inside a transaction.</li>
+<li><strong>Restore on exit.</strong> Rails joins nested transactions into one. If a block for board A ran inside a longer transaction, the setting would stay after the block ended. The <code>ensure</code> puts the previous value back. Specs depend on this: the whole spec runs in one transaction, so without the restore, a board set in a spec's setup would still be set during the request under test.</li>
+<li><strong>The <code>rescue</code> in <code>restore</code>.</strong> After a database error, Postgres rejects every statement until rollback. Restoring would raise a second error and hide the first. The rollback drops the setting anyway, so we skip it in that one case.</li>
+</ul>
+<p>The spec that proves all this runs as the app role. Its first example checks that, because a spec that ran as a superuser would pass whatever the policy said:</p>
+<figure class="code"><figcaption><span class="path">backend/spec/tenancy/row_level_security_spec.rb · from line 11</span></figcaption><div class="scroll"><pre><code class="language-ruby">  it &quot;runs specs as a role that row-level security applies to&quot; do
+    role = connection.select_one(
+      &quot;SELECT rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user&quot;
+    )
+    expect(role).to eq(&quot;rolsuper&quot; =&gt; false, &quot;rolbypassrls&quot; =&gt; false)
+  end
+
+  context &quot;with schools in two organizations&quot; do
+    before do
+      in_organization(eldritch) { School.create!(organization: eldritch, name: &quot;Innsmouth Heights Secondary School&quot;, time_zone: &quot;America/New_York&quot;) }
+      in_organization(realms) { School.create!(organization: realms, name: &quot;Quest Preparatory Academy&quot;, time_zone: &quot;America/Toronto&quot;) }
+    end
+
+    it &quot;shows only the current organization&#x27;s rows&quot; do
+      names = in_organization(eldritch) { School.pluck(:name) }
+
+      expect(names).to eq([ &quot;Innsmouth Heights Secondary School&quot; ])
+    end
+
+    it &quot;shows no rows when no organization is set&quot; do
+      expect(School.count).to eq(0)
+    end
+
+    it &quot;clears the organization when the block ends&quot; do
+      in_organization(eldritch) { School.count }
+
+      expect(School.count).to eq(0)
+    end</code></pre></div><p class="code-note">The other examples check that rows of another board cannot be referenced or inserted. I wrote them before the policy existed and watched five fail because both boards' rows were visible.</p></figure>
+</section>
+<section id="lookup"><h2><span class="n">5</span>The one read across boards</h2>
+<p>Login has a problem. Before the person is logged in, no board is set, so RLS hides every user row. But to log in we must find which boards this identity has users in.</p>
+<p><code>architecture.md</code> says to solve this with a narrow database function, not by giving the app a role that bypasses RLS:</p>
+<figure class="code"><figcaption><span class="path">backend/db/migrate/20261117000007_create_identity_organization_ids.rb</span></figcaption><div class="scroll"><pre><code class="language-ruby"># The only cross-organization read in the app. Login uses it to find the
+# organizations where an identity has a user. db/privileges.sql makes
+# permishly_cross_tenant_reader (BYPASSRLS) the owner, so the function reads
+# past row-level security, and lets only the app role run it.
+class CreateIdentityOrganizationIds &lt; ActiveRecord::Migration[8.1]
+  def up
+    execute &lt;&lt;~SQL
+      CREATE FUNCTION identity_organization_ids(p_identity_id uuid)
+      RETURNS SETOF uuid
+      LANGUAGE sql STABLE SECURITY DEFINER
+      SET search_path = pg_catalog, public
+      AS $$
+        SELECT organization_id FROM public.users WHERE identity_id = p_identity_id
+      $$;
+    SQL
+  end
+
+  def down
+    execute &quot;DROP FUNCTION identity_organization_ids(uuid)&quot;
+  end
+end</code></pre></div></figure>
+<ul>
+<li><strong><code>SECURITY DEFINER</code></strong> runs the function with its owner's rights. <code>db/privileges.sql</code> makes <code>permishly_cross_tenant_reader</code> the owner. That role has <code>BYPASSRLS</code>, but it can read only two columns of <code>users</code>, and nobody can log in as it.</li>
+<li><strong>It returns board IDs only</strong>, not names or user data. The caller reads names from <code>organizations</code>, which is global anyway.</li>
+<li><strong><code>SET search_path</code></strong> stops a caller from creating a look-alike <code>users</code> table in another schema to trick the function.</li>
+<li>Only <code>permishly_app</code> can run it. <code>PUBLIC</code> loses <code>EXECUTE</code>.</li>
+</ul>
+<p>The Ruby side is one method on <code>Identity</code>:</p>
+<figure class="code"><figcaption><span class="path">backend/app/models/identity.rb</span></figcaption><div class="scroll"><pre><code class="language-ruby"># Login credentials for a person. Global table. Capability: Authentication.
+# Only the Authentication capability reads or writes identities.
+class Identity &lt; ApplicationRecord
+  has_secure_password
+  has_many :sessions
+
+  normalizes :email, with: -&gt;(email) { email.strip.downcase }
+
+  validates :email, presence: true, uniqueness: true
+
+  # The organizations where the identity has a user. This is the only read
+  # across organizations. It uses the identity_organization_ids database function.
+  def self.organization_ids_for(identity_id)
+    connection.select_values(sanitize_sql_array([ &quot;SELECT identity_organization_ids(?)&quot;, identity_id ]))
+  end
+end</code></pre></div></figure>
+</section>
+<section id="base"><h2><span class="n">6</span>Commands, queries and results</h2>
+<p>The architecture uses commands for writes and queries for reads. A controller never touches models directly. It calls a command or query and gets back a <code>UseCaseResult</code>: a success with a value, or a failure with a category and a list of errors.</p>
+<figure class="code"><figcaption><span class="path">backend/app/lib/use_case_result.rb</span></figcaption><div class="scroll"><pre><code class="language-ruby"># The result of a command or query. See &quot;Results and errors&quot; in ../architecture.md.
+class UseCaseResult
+  CATEGORIES = %i[validation unauthenticated forbidden not_found conflict].freeze
+
+  Error = Data.define(:field, :code, :message) do
+    def initialize(field:, code:, message:)
+      super(field: field&amp;.to_s, code: code.to_s, message:)
+    end
+  end
+
+  attr_reader :value, :errors, :category
+
+  def self.success(value = nil) = new(value:)
+
+  def self.failure(category, errors)
+    raise ArgumentError, &quot;unknown failure category: #{category}&quot; unless CATEGORIES.include?(category)
+
+    new(category:, errors:)
+  end
+
+  def initialize(value: nil, category: nil, errors: [])
+    @value = value
+    @category = category
+    @errors = errors.freeze
+    freeze
+  end
+
+  def success? = category.nil?
+  def failure? = !success?
+end</code></pre></div></figure>
+<p>The category decides the HTTP status (part 8). <code>unauthenticated</code> was added for this feature: 401, for "not logged in" and "login failed".</p>
+<p>Commands and queries share one shape, held in a concern:</p>
+<figure class="code"><figcaption><span class="path">backend/app/lib/use_case.rb</span></figcaption><div class="scroll"><pre><code class="language-ruby"># Shared shape of ApplicationCommand and ApplicationQuery: attributes,
+# validation, dependencies and the organization (tenant).
+module UseCase
+  extend ActiveSupport::Concern
+  include ActiveModel::Model
+  include ActiveModel::Attributes
+
+  included do
+    class_attribute :dependency_defaults, instance_writer: false, default: {}
+    class_attribute :requires_organization, instance_accessor: false, default: true
+
+    # The tenant. Required unless the class calls runs_without_organization.
+    attribute :organization_id, :string
+    validates :organization_id, presence: true, if: -&gt; { self.class.requires_organization }
+  end
+
+  class_methods do
+    # call(inputs, **dependencies) or call(**inputs_and_dependencies).
+    # Keywords that name a declared dependency are dependencies. Others are inputs.
+    def call(inputs = {}, **keywords)
+      dependencies = keywords.slice(*dependency_defaults.keys)
+      new(inputs.to_h.merge(keywords.except(*dependency_defaults.keys)), dependencies).run
+    end
+
+    # Declares an injected boundary. Tests pass a fake to call.
+    def dependency(name, default:)
+      self.dependency_defaults = dependency_defaults.merge(name =&gt; default)
+      define_method(name) { @dependencies.fetch(name) { @dependencies[name] = dependency_defaults.fetch(name).call } }
+    end
+
+    # For global work: login, and the organizations table itself.
+    def runs_without_organization
+      self.requires_organization = false
+    end
+  end
+
+  def initialize(inputs, dependencies)
+    @dependencies = dependencies.dup
+    super(inputs)
+  end
+
+  private
+
+  def perform
+    raise NotImplementedError, &quot;#{self.class.name} must define perform&quot;
+  end
+
+  def success(value = nil) = UseCaseResult.success(value)
+
+  def failure(category, field: nil, code:, message:)
+    UseCaseResult.failure(category, [ UseCaseResult::Error.new(field:, code:, message:) ])
+  end
+
+  def validation_failure
+    UseCaseResult.failure(:validation, errors.map do |error|
+      UseCaseResult::Error.new(field: error.attribute, code: error.type, message: error.message)
+    end)
+  end
+
+  def in_organization(&amp;)
+    return yield unless self.class.requires_organization
+
+    Tenancy.with_organization(organization_id, &amp;)
+  end
+end</code></pre></div></figure>
+<ul>
+<li><strong>Inputs are ActiveModel attributes.</strong> They are typed, and <code>validates</code> works on them.</li>
+<li><strong>Every use case has an <code>organization_id</code> input, required by default.</strong> A class that does global work, such as login, opts out with <code>runs_without_organization</code>. The default is the safe one: forgetting the declaration gives a validation failure, not unscoped access.</li>
+<li><strong><code>call</code> splits its keywords.</strong> The architecture shows both <code>call(inputs, fake: x)</code> and <code>RosterQuery.call(school_id:, page:)</code>. Keywords that name a declared <code>dependency</code> are dependencies, and the rest are inputs.</li>
+<li><strong>The ActiveModel modules are included at module level</strong>, not inside <code>included do</code>. If they were in that block, their <code>initialize</code> would come first in Ruby's lookup order and hide ours. That was the first bug the specs found.</li>
+</ul>
+<p>A command validates, opens a transaction, sets the board, runs <code>perform</code>, and rolls back if <code>perform</code> returns a failure:</p>
+<figure class="code"><figcaption><span class="path">backend/app/capabilities/application_command.rb</span></figcaption><div class="scroll"><pre><code class="language-ruby"># Base class for commands. See &quot;Commands&quot; in ../../architecture.md.
+#
+# 1. Validate the inputs. If they are not valid, return a validation failure.
+# 2. Open a transaction and set the organization.
+# 3. Call perform. If it returns a failure, roll back.
+class ApplicationCommand
+  include UseCase
+
+  def run
+    return validation_failure unless valid?
+
+    result = nil
+    ApplicationRecord.transaction do
+      result = in_organization { perform }
+      raise TypeError, &quot;#{self.class.name}#perform must return a UseCaseResult&quot; unless result.is_a?(UseCaseResult)
+      raise ActiveRecord::Rollback if result.failure?
+    end
+    result
+  end
+end</code></pre></div></figure>
+<p>A query runs in a read-only transaction and blocks writes in Active Record too:</p>
+<figure class="code"><figcaption><span class="path">backend/app/capabilities/application_query.rb</span></figcaption><div class="scroll"><pre><code class="language-ruby"># Base class for queries. See &quot;Queries&quot; in ../../architecture.md.
+#
+# A query runs in a read-only transaction with the organization set, and
+# Active Record prevents writes.
+class ApplicationQuery
+  include UseCase
+
+  def run
+    return validation_failure unless valid?
+
+    # Only the first statement of a transaction can make it read-only. A query
+    # inside a command joins the command&#x27;s transaction, so it skips this.
+    read_only = !ApplicationRecord.connection.transaction_open?
+    ApplicationRecord.transaction do
+      ApplicationRecord.connection.execute(&quot;SET TRANSACTION READ ONLY&quot;) if read_only
+      in_organization { ActiveRecord::Base.while_preventing_writes { perform } }
+    end
+  end
+end</code></pre></div></figure>
+<p>Two details here came from bugs:</p>
+<ul>
+<li><strong><code>read_only</code> is computed before <code>transaction</code> opens.</strong> The first version checked it inside the block, where a transaction is always open, so no query was ever read-only. The specs could not see this, because every spec runs inside a transaction. A spec with <code>use_transactional_tests = false</code> now checks <code>SHOW transaction_read_only</code> returns <code>on</code>.</li>
+<li><strong><code>ActiveRecord::Base.while_preventing_writes</code>, not <code>ApplicationRecord</code>.</strong> The connection pool belongs to <code>ActiveRecord::Base</code>. Called on <code>ApplicationRecord</code>, the guard did nothing.</li>
+</ul>
+</section>
+<section id="auth"><h2><span class="n">7</span>The login logic</h2>
+<p>The Authentication capability owns identities and sessions. Its code is in <code>app/capabilities/authentication/</code>.</p>
+<h3>Log in</h3>
+<figure class="code"><figcaption><span class="path">backend/app/capabilities/authentication/log_in.rb</span></figcaption><div class="scroll"><pre><code class="language-ruby"># Checks an email and password, and starts a session.
+# If the identity has a user in one organization, the session is in that organization.
+# If it has users in more than one, the person picks one (ChooseOrganization).
+class Authentication::LogIn &lt; ApplicationCommand
+  runs_without_organization
+
+  attribute :email, :string
+  attribute :password, :string
+  attribute :ip_address, :string
+  attribute :user_agent, :string
+  validates :email, :password, presence: true
+
+  Started = Data.define(:session_id)
+
+  def perform
+    # authenticate_by takes the same time for an unknown email and a wrong password.
+    identity = Identity.authenticate_by(email:, password:)
+    return invalid_credentials unless identity
+
+    organization_ids = Identity.organization_ids_for(identity.id)
+    return no_organization if organization_ids.empty?
+
+    session = Session.create!(
+      identity:,
+      organization_id: (organization_ids.first if organization_ids.one?),
+      ip_address:,
+      user_agent:
+    )
+    success(Started.new(session_id: session.id))
+  end
+
+  private
+
+  # One message for an unknown email and a wrong password, so login does not
+  # reveal which email addresses have accounts.
+  def invalid_credentials
+    failure(:unauthenticated, code: &quot;invalid_credentials&quot;, message: &quot;Email or password is incorrect.&quot;)
+  end
+
+  def no_organization
+    failure(:unauthenticated, code: &quot;no_organization&quot;, message: &quot;Your account is not part of an organization.&quot;)
+  end
+end</code></pre></div></figure>
+<ul>
+<li><strong><code>authenticate_by</code></strong> (Rails 7.1+) takes the same time when the email is unknown as when the password is wrong. Otherwise an attacker could time the response to learn which emails have accounts.</li>
+<li><strong>One message for both cases</strong>, for the same reason.</li>
+<li><strong>One board: the session is in it at once. More than one: <code>organization_id</code> stays null</strong> and the person picks. Login never lists boards before the password is correct, because that would tell anyone which boards an email belongs to.</li>
+<li>It returns only the session ID. The controller puts that in the cookie.</li>
+</ul>
+<h3>Pick a board</h3>
+<figure class="code"><figcaption><span class="path">backend/app/capabilities/authentication/choose_organization.rb</span></figcaption><div class="scroll"><pre><code class="language-ruby"># Puts a session in one of the organizations where its identity has a user.
+class Authentication::ChooseOrganization &lt; ApplicationCommand
+  runs_without_organization
+
+  attribute :session_id, :string
+  # organization_id (from ApplicationCommand) is the organization to choose.
+  validates :organization_id, presence: true
+
+  def perform
+    session = Session.lock.find_by(id: session_id)
+    return Authentication.not_logged_in unless session
+
+    unless Identity.organization_ids_for(session.identity_id).include?(organization_id)
+      return failure(:forbidden, field: :organization_id, code: &quot;not_a_member&quot;,
+                                 message: &quot;You are not a member of this organization.&quot;)
+    end
+
+    session.update!(organization_id:)
+    success
+  end
+end</code></pre></div><p class="code-note">The membership check uses the same database function as login. Without it, a logged-in person could send any board's ID and read that board's data.</p></figure>
+<h3>Read the current session</h3>
+<p><code>GET /api/v1/session</code> answers one of three ways: not logged in, logged in but needs to pick a board, or signed in.</p>
+<figure class="code"><figcaption><span class="path">backend/app/capabilities/authentication/current_session_query.rb</span></figcaption><div class="scroll"><pre><code class="language-ruby"># What the person sees after login: their user in the session&#x27;s organization,
+# or the organizations to pick from.
+class Authentication::CurrentSessionQuery &lt; ApplicationQuery
+  runs_without_organization
+
+  attribute :session_id, :string
+
+  SignedIn = Data.define(:current_user) do
+    def as_json(*)
+      { status: &quot;signed_in&quot; }.merge(current_user.as_json).as_json
+    end
+  end
+
+  OrganizationRequired = Data.define(:organizations) do
+    def as_json(*)
+      { status: &quot;organization_required&quot;, organizations: }.as_json
+    end
+  end
+
+  def perform
+    session = Session.find_by(id: session_id) if session_id.present?
+    return Authentication.not_logged_in unless session
+
+    if session.organization_id
+      signed_in(session)
+    else
+      pick_organization(session)
+    end
+  end
+
+  private
+
+  def signed_in(session)
+    result = Accounts::CurrentUserQuery.call(organization_id: session.organization_id, identity_id: session.identity_id)
+    # The user was removed after login.
+    return Authentication.not_logged_in if result.failure?
+
+    success(SignedIn.new(current_user: result.value))
+  end
+
+  def pick_organization(session)
+    organizations = Organization.where(id: Identity.organization_ids_for(session.identity_id))
+                                .order(:name).pluck(:id, :name)
+                                .map { |id, name| RecordSummary.new(id:, name:) }
+    success(OrganizationRequired.new(organizations:))
+  end
+end</code></pre></div></figure>
+<p>When a board is set, it calls a query from the Accounts capability. This query is tenant-scoped, so RLS does the filtering:</p>
+<figure class="code"><figcaption><span class="path">backend/app/capabilities/accounts/current_user_query.rb</span></figcaption><div class="scroll"><pre><code class="language-ruby"># The identity&#x27;s user in the organization, and the schools that user administers.
+class Accounts::CurrentUserQuery &lt; ApplicationQuery
+  attribute :identity_id, :string
+  validates :identity_id, presence: true
+
+  CurrentUser = Data.define(:name, :organization, :administered_schools) do
+    def as_json(*)
+      { user: { name: }, organization:, administered_schools: }.as_json
+    end
+  end
+
+  def perform
+    # Row-level security limits users to the organization.
+    user = User.find_by(identity_id:)
+    return failure(:not_found, code: &quot;user_not_found&quot;, message: &quot;User not found.&quot;) unless user
+
+    organization = Organization.find(organization_id)
+    schools = School.joins(:school_administrators)
+                    .where(school_administrators: { user_id: user.id })
+                    .order(:name).pluck(:id, :name)
+
+    success(CurrentUser.new(
+      name: user.name,
+      organization: RecordSummary.new(id: organization.id, name: organization.name),
+      administered_schools: schools.map { |id, name| RecordSummary.new(id:, name:) }
+    ))
+  end
+end</code></pre></div><p class="code-note"><code>User.find_by(identity_id:)</code> has no board filter in Ruby. Row-level security supplies it. The spec for this query gives one identity users in two boards with different names, so a broken policy would return the wrong name.</p></figure>
+<p>The <code>Data.define</code> classes are the response DTOs. They define <code>as_json</code>, so the API's JSON shape is written down in one place and is never an Active Record model.</p>
+</section>
+<section id="http"><h2><span class="n">8</span>The HTTP layer</h2>
+<p>The routes:</p>
+<figure class="code"><figcaption><span class="path">backend/config/routes.rb · excerpt</span></figcaption><div class="scroll"><pre><code class="language-ruby">resource :session, only: %i[show create destroy] do
+  resource :organization, only: :create, controller: &quot;session_organizations&quot;
+end</code></pre></div></figure>
+<div class="table"><table>
+<thead><tr><th>Request</th><th>Does</th><th>Answers</th></tr></thead>
+<tbody>
+<tr><td><code>POST /api/v1/session</code></td><td>Log in</td><td>204 and cookie, or 401</td></tr>
+<tr><td><code>GET /api/v1/session</code></td><td>Current session</td><td>200 <code>signed_in</code> or <code>organization_required</code>, or 401</td></tr>
+<tr><td><code>POST /api/v1/session/organization</code></td><td>Pick a board</td><td>204, 401 or 403</td></tr>
+<tr><td><code>DELETE /api/v1/session</code></td><td>Log out</td><td>204</td></tr>
+</tbody></table></div>
+<p>The base controller turns a result into a response, using the table from <code>architecture.md</code>:</p>
+<figure class="code"><figcaption><span class="path">backend/app/controllers/api/v1/base_controller.rb</span></figcaption><div class="scroll"><pre><code class="language-ruby">module Api
+  module V1
+    # Base class for all versioned API controllers.
+    # Maps a UseCaseResult to an HTTP response. See &quot;Results and errors&quot; in architecture.md.
+    class BaseController &lt; ApplicationController
+      include ActionController::Cookies
+      include SessionCookie
+
+      FAILURE_STATUSES = {
+        validation: :unprocessable_content,
+        unauthenticated: :unauthorized,
+        forbidden: :forbidden,
+        not_found: :not_found,
+        conflict: :conflict
+      }.freeze
+
+      private
+
+      def render_result(result, status: :ok)
+        return render_failure(result) if result.failure?
+
+        if result.value.nil?
+          head status == :ok ? :no_content : status
+        else
+          render json: result.value, status:
+        end
+      end
+
+      def render_failure(result)
+        render json: { errors: result.errors.map(&amp;:to_h) }, status: FAILURE_STATUSES.fetch(result.category)
+      end
+    end
+  end
+end</code></pre></div></figure>
+<p>The cookie. The app is API-only, so <code>config/application.rb</code> adds the cookie middleware back, and the base controller includes <code>ActionController::Cookies</code>.</p>
+<figure class="code"><figcaption><span class="path">backend/app/controllers/concerns/session_cookie.rb</span></figcaption><div class="scroll"><pre><code class="language-ruby"># The login session ID, in a signed cookie that JavaScript cannot read.
+# SameSite=Lax: browsers do not send the cookie with cross-site POST requests.
+module SessionCookie
+  private
+
+  def session_cookie_id
+    cookies.signed[:session_id]
+  end
+
+  def start_session_cookie(session_id)
+    cookies.signed.permanent[:session_id] = {
+      value: session_id, httponly: true, same_site: :lax, secure: Rails.env.production?
+    }
+  end
+
+  def end_session_cookie
+    cookies.delete(:session_id)
+  end
+end</code></pre></div></figure>
+<ul>
+<li><strong>Signed:</strong> the browser cannot change the session ID. A spec sends a real session ID in an unsigned cookie and gets 401.</li>
+<li><strong><code>httponly</code>:</strong> JavaScript on the page cannot read it, so a script injected into the page cannot steal it.</li>
+<li><strong><code>same_site: :lax</code>:</strong> browsers do not send it with a POST from another site. This is the only CSRF protection for now, and <code>todo.md</code> asks whether we need more.</li>
+</ul>
+<p>The controller is thin. Logging in is rate limited with Rails 8's <code>rate_limit</code>: ten tries in three minutes for each IP address.</p>
+<figure class="code"><figcaption><span class="path">backend/app/controllers/api/v1/sessions_controller.rb</span></figcaption><div class="scroll"><pre><code class="language-ruby">module Api
+  module V1
+    class SessionsController &lt; BaseController
+      rate_limit to: 10, within: 3.minutes, only: :create, with: -&gt; {
+        render json: { errors: [ { field: nil, code: &quot;rate_limited&quot;, message: &quot;Too many login attempts. Try again later.&quot; } ] },
+               status: :too_many_requests
+      }
+
+      def show
+        render_result(Authentication::CurrentSessionQuery.call(session_id: session_cookie_id))
+      end
+
+      def create
+        result = Authentication::LogIn.call(
+          email: params[:email], password: params[:password],
+          ip_address: request.remote_ip, user_agent: request.user_agent
+        )
+        return render_failure(result) if result.failure?
+
+        start_session_cookie(result.value.session_id)
+        head :no_content
+      end
+
+      def destroy
+        Authentication::LogOut.call(session_id: session_cookie_id)
+        end_session_cookie
+        head :no_content
+      end
+    end
+  end
+end</code></pre></div></figure>
+</section>
+<section id="react"><h2><span class="n">9</span>The React side</h2>
+<p>All server data goes through TanStack Query. The session has one query key, <code>['authentication', 'session']</code>. After a command succeeds, React invalidates that key and refetches, so the screens always draw what the server says.</p>
+<figure class="code"><figcaption><span class="path">frontend/src/features/authentication/sessionApi.ts</span></figcaption><div class="scroll"><pre><code class="language-typescript">import { useQuery } from &#x27;@tanstack/react-query&#x27;
+import { ApiError, apiFetch } from &#x27;../../lib/api&#x27;
+
+export type Summary = { id: string; name: string }
+
+export type CurrentSession =
+  | {
+      status: &#x27;signed_in&#x27;
+      user: { name: string }
+      organization: Summary
+      administered_schools: Summary[]
+    }
+  | { status: &#x27;organization_required&#x27;; organizations: Summary[] }
+
+export const sessionQueryKey = [&#x27;authentication&#x27;, &#x27;session&#x27;] as const
+
+export const getSession = () =&gt; apiFetch&lt;CurrentSession&gt;(&#x27;/session&#x27;)
+
+export const logIn = (email: string, password: string) =&gt;
+  apiFetch&lt;null&gt;(&#x27;/session&#x27;, { method: &#x27;POST&#x27;, body: JSON.stringify({ email, password }) })
+
+export const chooseOrganization = (organizationId: string) =&gt;
+  apiFetch&lt;null&gt;(&#x27;/session/organization&#x27;, {
+    method: &#x27;POST&#x27;,
+    body: JSON.stringify({ organization_id: organizationId }),
+  })
+
+export const logOut = () =&gt; apiFetch&lt;null&gt;(&#x27;/session&#x27;, { method: &#x27;DELETE&#x27; })
+
+export const isNotLoggedIn = (error: unknown) =&gt; error instanceof ApiError &amp;&amp; error.status === 401
+
+export function useCurrentSession() {
+  return useQuery({
+    queryKey: sessionQueryKey,
+    queryFn: getSession,
+    // &quot;Not logged in&quot; is an answer, not a failure to retry.
+    retry: (failureCount, error) =&gt; !isNotLoggedIn(error) &amp;&amp; failureCount &lt; 3,
+  })
+}</code></pre></div><p class="code-note">The <code>retry</code> rule matters. TanStack Query retries failed requests three times by default. A 401 is an answer, not a network fault, so it must not be retried.</p></figure>
+<p>The login form posts, refreshes the session query, and goes to the home page. On failure it shows the server's own message:</p>
+<figure class="code"><figcaption><span class="path">frontend/src/features/authentication/LoginPage.tsx · from line 7</span></figcaption><div class="scroll"><pre><code class="language-tsx">export function LoginPage() {
+  const [email, setEmail] = useState(&#x27;&#x27;)
+  const [password, setPassword] = useState(&#x27;&#x27;)
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+
+  const login = useMutation({
+    mutationFn: () =&gt; logIn(email, password),
+    onSuccess: async () =&gt; {
+      await queryClient.invalidateQueries({ queryKey: sessionQueryKey })
+      navigate(&#x27;/&#x27;, { replace: true })
+    },
+  })</code></pre></div></figure>
+<p>The home page is where the session decides the screen. Not logged in goes to <code>/login</code>. More than one board shows the picker. Signed in shows the board and schools:</p>
+<figure class="code"><figcaption><span class="path">frontend/src/pages/HomePage.tsx</span></figcaption><div class="scroll"><pre><code class="language-tsx">import { Navigate } from &#x27;react-router&#x27;
+import { OrganizationPicker } from &#x27;../features/authentication/OrganizationPicker&#x27;
+import { isNotLoggedIn, useCurrentSession } from &#x27;../features/authentication/sessionApi&#x27;
+
+export function HomePage() {
+  const { data, error, isPending } = useCurrentSession()
+
+  if (isPending) return &lt;p&gt;Loading…&lt;/p&gt;
+  if (isNotLoggedIn(error)) return &lt;Navigate to=&quot;/login&quot; replace /&gt;
+  if (error) return &lt;p className=&quot;text-red-600&quot;&gt;Could not load your account. Try again later.&lt;/p&gt;
+  if (data.status === &#x27;organization_required&#x27;) {
+    return &lt;OrganizationPicker organizations={data.organizations} /&gt;
+  }
+
+  return (
+    &lt;section className=&quot;space-y-4&quot;&gt;
+      &lt;div&gt;
+        &lt;h1 className=&quot;text-2xl font-bold&quot;&gt;{data.organization.name}&lt;/h1&gt;
+        &lt;p className=&quot;text-sm text-slate-600&quot;&gt;Signed in as {data.user.name}&lt;/p&gt;
+      &lt;/div&gt;
+      &lt;div className=&quot;rounded-lg border border-slate-200 bg-white p-4&quot;&gt;
+        &lt;h2 className=&quot;mb-2 font-medium&quot;&gt;Schools you administer&lt;/h2&gt;
+        {data.administered_schools.length === 0 ? (
+          &lt;p className=&quot;text-sm text-slate-600&quot;&gt;You do not administer a school.&lt;/p&gt;
+        ) : (
+          &lt;ul className=&quot;space-y-1&quot;&gt;
+            {data.administered_schools.map((school) =&gt; (
+              &lt;li key={school.id}&gt;{school.name}&lt;/li&gt;
+            ))}
+          &lt;/ul&gt;
+        )}
+      &lt;/div&gt;
+    &lt;/section&gt;
+  )
+}</code></pre></div></figure>
+<figure class="code"><figcaption><span class="path">frontend/src/features/authentication/OrganizationPicker.tsx · from line 6</span></figcaption><div class="scroll"><pre><code class="language-tsx">export function OrganizationPicker({ organizations }: { organizations: Summary[] }) {
+  const queryClient = useQueryClient()
+  const choose = useMutation({
+    mutationFn: chooseOrganization,
+    onSuccess: () =&gt; queryClient.invalidateQueries({ queryKey: sessionQueryKey }),
+  })</code></pre></div></figure>
+<p>The header in <code>AppLayout.tsx</code> shows <strong>Log out</strong> whenever a session exists. Logging out removes the cached session and goes to <code>/login</code>.</p>
+</section>
+<section id="demo"><h2><span class="n">10</span>Demo data</h2>
+<p><code>db/seeds.rb</code> loads the demo file only in development. The data comes from <code>etc/demo-school-data.txt</code>: three boards, three schools each, and one administrator for each school. One extra person, Morgan Crossway, administers schools in two boards, so the picker can be tried.</p>
+<figure class="code"><figcaption><span class="path">backend/db/seeds/demo.rb · from line 6</span></figcaption><div class="scroll"><pre><code class="language-ruby">module DemoData
+  DEMO_PASSWORD = &quot;permishly-demo&quot;.freeze
+
+  # Board =&gt; { time_zone:, email_domain:, schools: { school name =&gt; administrator name } }
+  BOARDS = {
+    &quot;Eldritch Shores Board of Education&quot; =&gt; {
+      time_zone: &quot;America/New_York&quot;, email_domain: &quot;eldritch-shores.example&quot;,
+      schools: {
+        &quot;Innsmouth Heights Secondary School&quot; =&gt; &quot;Marsha Deepwater&quot;,
+        &quot;Unknowable Horizons Academy&quot; =&gt; &quot;Ida Fathom&quot;,
+        &quot;The School Beyond the Pines&quot; =&gt; &quot;Silas Pine&quot;
+      }
+    },
+    &quot;Central Directorate of Approved Learning&quot; =&gt; {
+      time_zone: &quot;America/Chicago&quot;, email_domain: &quot;central-directorate.example&quot;,
+      schools: {
+        &quot;Compliance Collegiate&quot; =&gt; &quot;Prudence Form&quot;,
+        &quot;Designated Learning Facility 7&quot; =&gt; &quot;Rex Ledger&quot;,
+        &quot;Bright Future Academy&quot; =&gt; &quot;Hope Sunnyvale&quot;
+      }
+    },
+    &quot;United Realms District School Board&quot; =&gt; {
+      time_zone: &quot;America/Toronto&quot;, email_domain: &quot;united-realms.example&quot;,
+      schools: {
+        &quot;Quest Preparatory Academy&quot; =&gt; &quot;Gwendolyn Brightshield&quot;,
+        &quot;Wyvern Heights Secondary School&quot; =&gt; &quot;Tobias Emberwing&quot;,
+        &quot;The Royal School of Mostly Safe Spells&quot; =&gt; &quot;Mabel Fizzwick&quot;
+      }
+    }
+  }.freeze</code></pre></div></figure>
+<p>Every write uses <code>find_or_create_by!</code>, so running the seeds twice changes nothing. The writes go straight to the models. That breaks the rule that every write goes through a command, because the commands to create boards, schools and users do not exist yet. <code>todo.md</code> records it.</p>
+<p>Every demo account uses the password <code>permishly-demo</code>. Try <code>marsha.deepwater@eldritch-shores.example</code> for one board, or <code>morgan.crossway@example.com</code> for the picker.</p>
+</section>
+<section id="tests"><h2><span class="n">11</span>How the tests prove it</h2>
+<p>Each test was written before the code it covers, and was run to see it fail for the right reason first. The failures were real behaviour gaps: rows from both boards visible, 404s for missing endpoints, a login form that did not exist.</p>
+<div class="table"><table>
+<thead><tr><th>Spec</th><th>Proves</th></tr></thead>
+<tbody>
+<tr><td><code>spec/tenancy/row_level_security_spec.rb</code></td><td>Specs run as a role RLS applies to. One board's rows only. No board set: no rows. Cannot insert or reference across boards. The setting does not leak.</td></tr>
+<tr><td><code>spec/capabilities/application_command_spec.rb</code></td><td>Writes land in the right board. Bad input writes nothing. A failure rolls back. A board is required unless the class opts out. Dependencies can be replaced.</td></tr>
+<tr><td><code>spec/capabilities/application_query_spec.rb</code></td><td>Reads only the given board. Cannot write. Runs in a read-only transaction.</td></tr>
+<tr><td><code>spec/capabilities/accounts/current_user_query_spec.rb</code></td><td>Tenant isolation for the query.</td></tr>
+<tr><td><code>spec/requests/api/v1/session_spec.rb</code></td><td>The whole login over HTTP, below.</td></tr>
+<tr><td><code>frontend/src/features/authentication/LoginFlow.test.tsx</code></td><td>The screens: redirect to login, log in, wrong password, picker, log out.</td></tr>
+</tbody></table></div>
+<p>The request spec reads like the requirements. This is the main case:</p>
+<figure class="code"><figcaption><span class="path">backend/spec/requests/api/v1/session_spec.rb · from line 26</span></figcaption><div class="scroll"><pre><code class="language-ruby">  context &quot;when the administrator has a user in one organization&quot; do
+    before do
+      # Another administrator in the same board, at a school this person does not administer.
+      colleague = create_identity(email: &quot;barnabas.marsh@innsmouth.example&quot;, password: &quot;another password&quot;)
+      create_school_administrator(identity: colleague, organization: eldritch, name: &quot;Barnabas Marsh&quot;, schools: [ pines ])
+      quest # a school in another board
+      create_school_administrator(identity:, organization: eldritch, name: &quot;Zadok Allen&quot;, schools: [ innsmouth ])
+    end
+
+    it &quot;logs in and shows the administrator&#x27;s organization and schools&quot; do
+      log_in(email: &quot;zadok.allen@innsmouth.example&quot;, password: &quot;deep ones rising&quot;)
+
+      expect(response).to have_http_status(:no_content)
+      expect(current_session).to eq(
+        &quot;status&quot; =&gt; &quot;signed_in&quot;,
+        &quot;user&quot; =&gt; { &quot;name&quot; =&gt; &quot;Zadok Allen&quot; },
+        &quot;organization&quot; =&gt; { &quot;id&quot; =&gt; eldritch.id, &quot;name&quot; =&gt; &quot;Eldritch Shores Board of Education&quot; },
+        &quot;administered_schools&quot; =&gt; [ { &quot;id&quot; =&gt; innsmouth.id, &quot;name&quot; =&gt; &quot;Innsmouth Heights Secondary School&quot; } ]
+      )
+    end</code></pre></div></figure>
+<p>The colleague in the setup was added after a mutation check. With a defect that showed every administrator's schools, all specs still passed, because no spec had two administrators in one board. With the colleague added, the defect fails a spec.</p>
+<h3>Mutation checks</h3>
+<p>No mutation tool is set up, so defects were put in by hand, one at a time, and the suite was run. Each was caught:</p>
+<div class="table"><table>
+<thead><tr><th>Defect put in</th><th>Specs failing</th></tr></thead>
+<tbody class="num">
+<tr><td>Current-user query skips the board</td><td>4</td></tr>
+<tr><td>Login always picks the first board</td><td>2</td></tr>
+<tr><td>Picking a board skips the membership check</td><td>1</td></tr>
+<tr><td>Logout leaves the session row</td><td>1</td></tr>
+<tr><td>Email not normalized</td><td>1</td></tr>
+<tr><td>Board list not sorted</td><td>1</td></tr>
+<tr><td>Every administrator's schools shown</td><td>1 (after the fix above)</td></tr>
+<tr><td>Unsigned cookie accepted</td><td>6</td></tr>
+<tr><td>Identity with no board allowed in</td><td>1</td></tr>
+<tr><td><code>Tenancy</code> does not restore the board</td><td>4</td></tr>
+</tbody></table></div>
+<p>In React, four defects were tried, such as removing the redirect to login and not refreshing the session after picking a board. Each failed one test.</p>
+</section>
+<section id="traps"><h2><span class="n">12</span>Traps worth knowing</h2>
+<p>These cost time while building the feature. They are easy to hit again.</p>
+<dl class="traps">
+<dt>A superuser ignores RLS</dt>
+<dd>Even with <code>FORCE</code>. Check the connection role before you trust a passing isolation test.</dd>
+<dt>A reset setting is an empty string</dt>
+<dd><code>current_setting</code> returns <code>''</code>, not null, after a transaction that set it ends. Cast it with <code>NULLIF</code>.</dd>
+<dt><code>db:migrate</code> on an empty database loads <code>structure.sql</code></dt>
+<dd>It does not run the migrations. A stale <code>structure.sql</code> gives you a stale database. Delete it and migrate when you change a migration that already ran.</dd>
+<dt><code>pg_dump</code> must be the server's version or newer</dt>
+<dd>Rails runs your local <code>pg_dump</code>. The server is Postgres 18. Homebrew libpq had to go from 17 to 18.</dd>
+<dt>Grants do not survive a schema load</dt>
+<dd>Rails dumps with <code>--no-privileges --no-owner</code>. Put grants and function owners in <code>db/privileges.sql</code>.</dd>
+<dt>A test transaction hides transaction bugs</dt>
+<dd>Anything about "the first statement in a transaction" needs a spec with <code>use_transactional_tests = false</code>.</dd>
+<dt>A method name can hide a class attribute</dt>
+<dd>A private method called <code>organization_required</code> silently replaced the attribute reader of the same name. The attribute is now <code>requires_organization</code>, readable only on the class.</dd>
+</dl>
+</section>
+<section id="next"><h2><span class="n">13</span>Not done yet</h2>
+<ul>
+<li>Sessions never expire. The cookie is permanent and the server keeps old sessions.</li>
+<li>CSRF protection is <code>SameSite=Lax</code> only.</li>
+<li>No Google login.</li>
+<li>No screens or commands to create boards, schools or users. The seeds write directly.</li>
+<li>No authorization model yet. "School administrator" is a table, not a role with permissions.</li>
+<li>Production needs <code>PRIMARY_DATABASE_URL</code> and <code>OWNER_DATABASE_URL</code>, and a password for <code>permishly_app</code>.</li>
+</ul>
+<p>These are listed in <code>todo.md</code>.</p>
+</section></main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+  try {
+    document.querySelectorAll('pre code[class*="language-tsx"]').forEach(function (el) {
+      el.classList.remove('language-tsx'); el.classList.add('language-typescript');
+    });
+    if (window.hljs) document.querySelectorAll('figure.code pre code').forEach(function (el) { window.hljs.highlightElement(el); });
+  } catch (e) { /* plain code is still readable */ }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+  try {
+    if (window.mermaid) {
+      var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      window.mermaid.initialize({ startOnLoad: true, theme: dark ? "dark" : "default" });
+    }
+  } catch (e) { /* the diagram source is still readable */ }
+</script>
+</body>
+</html>
