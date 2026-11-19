@@ -98,6 +98,18 @@ Credentials are in a global `identities` table. Reason: a person has one passwor
 - Login is rate limited: 10 attempts in 3 minutes for each IP address.
 - Login never shows organizations before authentication succeeds. Reason: that would reveal which organizations an email address belongs to.
 
+### Sessions and CSRF
+
+`SameSite=Lax` stops the browser from sending the session cookie with a cross-site POST. It does not stop a cross-site POST from setting a new cookie. Without more protection, a form on another site could log the browser in to an attacker's account (login CSRF).
+
+- Every API request except `GET`, `HEAD` and `OPTIONS` must have an `Origin` header. The value must be the API's own origin, or an origin in `config.x.allowed_origins`. Otherwise the response is 403 `origin_not_allowed`. A request with no `Origin` is rejected. Reason: browsers send `Origin` with all of these requests.
+- `POST`, `PUT` and `PATCH` must send `Content-Type: application/json`. Otherwise the response is 415 `json_required`. Reason: an HTML form cannot send JSON, and a cross-origin `fetch` with JSON needs a CORS preflight.
+- `config.x.allowed_origins` comes from `CORS_ORIGINS`. CORS uses the same list. In production, the list is empty when `CORS_ORIGINS` is not set. Development and test allow the Vite servers, because the Vite proxy keeps the browser's `Origin`.
+- `GET` requests must not change data. Reason: they are not checked.
+- API responses send `Cache-Control: no-store`. Reason: responses contain a person's data, and school computers are shared.
+- `CrossSiteRequestProtection` (`app/controllers/concerns/`) does the checks. Request specs send writes with `api_post` and `api_delete`, which send JSON from the API's own origin.
+- Tools such as `curl` must send an `Origin` header for writes, for example `-H 'Origin: http://localhost:5173'`.
+
 ## Commands
 
 - Every consequential write goes through a command. This includes writes from controllers, jobs, rake tasks, and admin tools.

@@ -9,7 +9,7 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 - What is the model: roles, policies, relationship checks (for example, "is this parent linked to this student"), or a mix?
 - Authorization runs in step 3 of the command pipeline. What does that step do?
 - How does a command or query know the actor? An attribute on each one, or a context argument to `call`?
-- A school administrator who is also a parent in the same organization: one login with different views, or two accounts?
+- A school administrator who is also a parent in the same organization: one login with different views, or two accounts? `users` has a unique index on `(organization_id, identity_id)`, so now it is one user with two relationships. Two users in one organization needs a change to the index and to the organization picker. Decide before real user rows exist.
 - Which administrative data can board admins see?
 
 ### Multi-tenancy
@@ -37,9 +37,9 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 
 - Authentication: OmniAuth for Google? Tokens for a future mobile app? (Password login with cookie sessions is in `architecture.md`.)
 - Sessions: what are the absolute lifetime and the idle timeout? The cookie is permanent, and the `sessions` table has no expiry. School computers are often shared.
-- CSRF: `SameSite=Lax` is the only protection for cookie-authenticated writes. It does not stop login CSRF: a hostile site can log a victim in to the attacker's account. Proposal: accept only JSON requests and check the `Origin` header on writes. Alternative: a CSRF token.
 - Password rules: minimum length, and a check against breached passwords?
 - MFA: required for administrators? Which method (TOTP, passkeys)?
+- Authorization inside an organization: row-level security separates organizations only. A school administrator and a parent in the same organization see the same rows unless a command checks the actor. The first student, parent or payment table needs an actor and a policy on the command.
 - Password reset: who can reset a password? An identity is global, and it can have users in more than one organization. A reset by an administrator of one organization also changes access to the other organizations. Options:
   - Only the person, with a reset link sent to the identity's email address.
   - An administrator can send the reset link, but cannot set the password.
@@ -68,9 +68,12 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 - [ ] Add `bin/sync-guidelines --check` to CI. CI needs read access to the private useful_prompts repo (for example, a deploy key).
 - [ ] Authentication security (gaps found after the first login feature):
   - [ ] Expire sessions on the server (see "Sessions" above). Delete expired session rows with a job.
-  - [ ] Protect against login CSRF (see "CSRF" above).
-  - [ ] Rate limit: also limit by account, not only by IP address. Configure a shared production cache store, because `rate_limit` keeps its counts in `Rails.cache`. Set the trusted proxies, so `request.remote_ip` is the client address.
-  - [ ] CORS: refuse all origins in production when `CORS_ORIGINS` is not set. Now the fallback is `http://localhost:5173` with credentials.
+  - [ ] Rate limit: also limit by account, not only by IP address. Configure a shared production cache store, because `rate_limit` keeps its counts in `Rails.cache` and the default file store is per machine. Deny the login when the counter does not increment (a null store now disables the limit). Set the trusted proxies, so `request.remote_ip` is the client address.
+  - [ ] Session expiry also: when a login starts a new session, older sessions stay valid. The stored IP address and user agent are never compared.
+  - [ ] Controllers: resolve the session in one `BaseController` method and pass the session's `organization_id` to commands and queries. Accept an organization ID from the client only in `POST /api/v1/session/organization`. Do this before the next endpoint that uses an organization.
+  - [ ] Creating a user for an email that already has an identity: send an invitation that the person accepts. Do not attach the existing identity directly. Development seeds can keep creating rows directly.
+  - [ ] When a user is removed: end or move the sessions in that organization. Now `GET /api/v1/session` returns 401 even if the identity has another organization. When the identity has no users left, delete it and its sessions.
+  - [ ] Before the first deployed environment: refuse to boot when the `primary` database role has `rolbypassrls` or is a superuser. Set `config.hosts`. Decide whether `GET /api/v1/health` stays public (it reports database and job status).
   - [ ] Password reset (see "Password reset" above).
   - [ ] End all sessions of an identity when its password changes.
   - [ ] Audit log of logins, failed logins and logouts (see "Auditing and history").

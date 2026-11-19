@@ -44,6 +44,15 @@ module Permishly
     # Login uses a signed session cookie. API-only apps leave out the cookie middleware.
     config.middleware.use ActionDispatch::Cookies
 
+    # Browser origins, other than the API's own, that may call the API with cookies.
+    # CORS allows them, and writes from any other origin are rejected (CrossSiteRequestProtection).
+    # Set CORS_ORIGINS (comma-separated). Production allows no other origin when it is not set.
+    # Development and test allow the Vite dev server (5173) and the Playwright server (5174),
+    # because the Vite proxy keeps the browser's Origin header.
+    config.x.allowed_origins = ENV.fetch("CORS_ORIGINS") {
+      Rails.env.production? ? "" : "http://localhost:5173,http://localhost:5174"
+    }.split(",").map(&:strip).reject(&:empty?)
+
     # structure.sql stores row-level security policies. schema.rb cannot.
     config.active_record.schema_format = :sql
 

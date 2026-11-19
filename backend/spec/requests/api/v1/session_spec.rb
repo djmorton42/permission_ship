@@ -11,7 +11,7 @@ RSpec.describe "Session API", type: :request do
   let(:identity) { create_identity(email: "zadok.allen@innsmouth.example", password: "deep ones rising") }
 
   def log_in(email:, password:)
-    post "/api/v1/session", params: { email:, password: }, as: :json
+    api_post "/api/v1/session", { email:, password: }
   end
 
   def current_session
@@ -44,6 +44,26 @@ RSpec.describe "Session API", type: :request do
       )
     end
 
+    it "tells caches not to store the session" do
+      log_in(email: "zadok.allen@innsmouth.example", password: "deep ones rising")
+
+      get "/api/v1/session"
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["status"]).to eq("signed_in")
+      expect(response.headers["Cache-Control"]).to include("no-store")
+    end
+
+    it "limits login attempts" do
+      10.times { log_in(email: "zadok.allen@innsmouth.example", password: "shoggoth") }
+
+      log_in(email: "zadok.allen@innsmouth.example", password: "deep ones rising")
+
+      expect(response).to have_http_status(:too_many_requests)
+      expect(response.parsed_body["errors"].map { it["code"] }).to eq([ "rate_limited" ])
+      expect(Session.count).to eq(0)
+    end
+
     it "accepts the email with other capitals and spaces" do
       log_in(email: "  Zadok.Allen@Innsmouth.Example ", password: "deep ones rising")
 
@@ -64,7 +84,7 @@ RSpec.describe "Session API", type: :request do
     it "logs out" do
       log_in(email: "zadok.allen@innsmouth.example", password: "deep ones rising")
 
-      delete "/api/v1/session"
+      api_delete "/api/v1/session"
 
       expect(response).to have_http_status(:no_content)
       get "/api/v1/session"
@@ -75,7 +95,7 @@ RSpec.describe "Session API", type: :request do
       log_in(email: "zadok.allen@innsmouth.example", password: "deep ones rising")
       logged_in_cookie = cookies[:session_id]
 
-      delete "/api/v1/session"
+      api_delete "/api/v1/session"
       cookies[:session_id] = logged_in_cookie
       get "/api/v1/session"
 
@@ -134,7 +154,7 @@ RSpec.describe "Session API", type: :request do
     end
 
     it "shows only the picked organization's data" do
-      post "/api/v1/session/organization", params: { organization_id: realms.id }, as: :json
+      api_post "/api/v1/session/organization", { organization_id: realms.id }
 
       expect(response).to have_http_status(:no_content)
       expect(current_session).to eq(
@@ -148,7 +168,7 @@ RSpec.describe "Session API", type: :request do
     it "does not let the person pick an organization where they have no user" do
       directorate = Organization.create!(name: "Central Directorate of Approved Learning")
 
-      post "/api/v1/session/organization", params: { organization_id: directorate.id }, as: :json
+      api_post "/api/v1/session/organization", { organization_id: directorate.id }
 
       expect(response).to have_http_status(:forbidden)
       expect(current_session["status"]).to eq("organization_required")
@@ -156,7 +176,7 @@ RSpec.describe "Session API", type: :request do
   end
 
   it "requires login to pick an organization" do
-    post "/api/v1/session/organization", params: { organization_id: eldritch.id }, as: :json
+    api_post "/api/v1/session/organization", { organization_id: eldritch.id }
 
     expect(response).to have_http_status(:unauthorized)
   end

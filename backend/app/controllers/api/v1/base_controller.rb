@@ -5,6 +5,11 @@ module Api
     class BaseController < ApplicationController
       include ActionController::Cookies
       include SessionCookie
+      include CrossSiteRequestProtection
+
+      # Responses hold a person's data. Browsers and proxies must not keep a copy,
+      # for example on a shared school computer after logout.
+      before_action :no_store
 
       FAILURE_STATUSES = {
         validation: :unprocessable_content,
