@@ -98,6 +98,18 @@ Credentials are in a global `identities` table. Reason: a person has one passwor
 - Login is rate limited: 10 attempts in 3 minutes for each IP address.
 - Login never shows organizations before authentication succeeds. Reason: that would reveal which organizations an email address belongs to.
 
+### Signed-in requests
+
+`BaseController` finds the session once, before the action (`SignedInSession`, in `app/controllers/concerns/`).
+
+- By default, every action needs a session and an organization. Without a session, the response is 401 `not_logged_in`. Without an organization, the response is 403 `organization_required`. Reason: a new endpoint is protected even if its author forgets.
+- A controller opts out for named actions only:
+  - `allow_without_session only: ...`: login, logout, health, and the development demo accounts.
+  - `allow_without_organization only: ...`: the session read and the organization picker, which run before the person picks an organization.
+- Pass `organization_inputs(inputs)` to commands and queries. It sets `organization_id` from the session. An `organization_id` in the request never replaces it. Reason: row-level security shows the organization the app sets, so the app must set the session's organization.
+- `POST /api/v1/session/organization` is the only action that reads an organization ID from the request. `ChooseOrganization` checks that the identity has a user there.
+- `current_session` has the session ID, the identity ID, and the organization ID. The actor for authorization is still an open decision (`todo.md`).
+
 ### Sessions and CSRF
 
 `SameSite=Lax` stops the browser from sending the session cookie with a cross-site POST. It does not stop a cross-site POST from setting a new cookie. Without more protection, a form on another site could log the browser in to an attacker's account (login CSRF).

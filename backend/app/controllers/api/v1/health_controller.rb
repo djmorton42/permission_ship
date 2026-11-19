@@ -1,6 +1,9 @@
 module Api
   module V1
     class HealthController < BaseController
+      # Public: uptime checks have no session. Whether it stays public is in todo.md.
+      allow_without_session only: :show
+
       def show
         render json: {
           status: "ok",
