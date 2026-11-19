@@ -112,11 +112,18 @@ Credentials are in a global `identities` table. Reason: a person has one passwor
 
 ### Session lifetime
 
-- A session ends 9 hours after login (`Session::LIFETIME`). Reason: a session must not last forever, and 9 hours covers a working day.
-- The server decides. `sessions.expires_at` is the end time. A session at or after its end time is not logged in, everywhere the app reads a session (`Session.active_at`).
-- The cookie expires at the same time, so the browser deletes it. The expiry is also in the signed cookie value, so Rails rejects an old cookie that a client still sends.
+A session ends at the first of these times:
+
+| Limit | Value | Reason |
+| --- | --- | --- |
+| Idle timeout (`Session::IDLE_TIMEOUT`) | 30 minutes without a request | School computers are shared. A person can walk away without logging out. |
+| Absolute limit (`Session::LIFETIME`) | 9 hours after login | A session never lasts forever, even when it is in use, and a copied cookie stops working. 9 hours covers a working day. |
+
+- The server decides. `sessions.expires_at` is the absolute end time, and `sessions.last_active_at` is the time of the last request. A session past either limit is not logged in, everywhere the app reads a session (`Session.active_at`).
+- Every signed-in request sets `last_active_at` (`Authentication::RecordSessionActivity`, run by `SignedInSession`). This includes GET requests.
+- Do not let background requests, for example polling or automatic refreshes, keep a session alive. Reason: they make requests when nobody is at the computer. A feature that needs them must not count them as activity.
+- The cookie expires at the absolute end time, so the browser deletes it. The expiry is also in the signed cookie value, so Rails rejects an old cookie that a client still sends. The idle timeout is on the server only.
 - `Authentication::DeleteExpiredSessionsJob` deletes ended sessions every hour (`config/recurring.yml`).
-- An idle timeout is an open decision (`todo.md`).
 
 ### Sessions and CSRF
 
@@ -125,7 +132,7 @@ Credentials are in a global `identities` table. Reason: a person has one passwor
 - Every API request except `GET`, `HEAD` and `OPTIONS` must have an `Origin` header. The value must be the API's own origin, or an origin in `config.x.allowed_origins`. Otherwise the response is 403 `origin_not_allowed`. A request with no `Origin` is rejected. Reason: browsers send `Origin` with all of these requests.
 - `POST`, `PUT` and `PATCH` must send `Content-Type: application/json`. Otherwise the response is 415 `json_required`. Reason: an HTML form cannot send JSON, and a cross-origin `fetch` with JSON needs a CORS preflight.
 - `config.x.allowed_origins` comes from `CORS_ORIGINS`. CORS uses the same list. In production, the list is empty when `CORS_ORIGINS` is not set. Development and test allow the Vite servers, because the Vite proxy keeps the browser's `Origin`.
-- `GET` requests must not change data. Reason: they are not checked.
+- `GET` requests must not change data. Reason: they are not checked. The one exception is session activity (`last_active_at`), which is not data the person controls.
 - API responses send `Cache-Control: no-store`. Reason: responses contain a person's data, and school computers are shared.
 - `CrossSiteRequestProtection` (`app/controllers/concerns/`) does the checks. Request specs send writes with `api_post` and `api_delete`, which send JSON from the API's own origin.
 - Tools such as `curl` must send an `Origin` header for writes, for example `-H 'Origin: http://localhost:5173'`.

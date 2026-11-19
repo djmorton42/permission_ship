@@ -5,6 +5,8 @@
 # - allow_without_session: login and logout.
 # - allow_without_organization: the actions that run before the person picks an organization.
 #
+# Each signed-in request restarts the session's idle timeout (Authentication::RecordSessionActivity).
+#
 # Commands and queries get the organization from organization_inputs, which takes it
 # from the session. An organization ID in the request never replaces it.
 module SignedInSession
@@ -36,6 +38,7 @@ module SignedInSession
     return render_failure(result) if result.failure?
 
     @current_session = result.value
+    Authentication::RecordSessionActivity.call(session_id: current_session.id)
   end
 
   def require_organization

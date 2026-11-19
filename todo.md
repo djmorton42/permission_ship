@@ -36,7 +36,7 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 ### Product and platform
 
 - Authentication: OmniAuth for Google? Tokens for a future mobile app? (Password login with cookie sessions is in `architecture.md`.)
-- Sessions: do we also need an idle timeout? Sessions end 12 hours after login (see "Session lifetime" in `architecture.md`), but a session that nobody uses stays valid until then. School computers are often shared.
+- Sessions: do boards need their own session limits, or a "This is a shared computer" option at login with a shorter timeout? Now every session has a 30-minute idle timeout and a 9-hour limit (see "Session lifetime" in `architecture.md`).
 - Password rules: minimum length, and a check against breached passwords?
 - MFA: required for administrators? Which method (TOTP, passkeys)?
 - Authorization inside an organization: row-level security separates organizations only. A school administrator and a parent in the same organization see the same rows unless a command checks the actor. The first student, parent or payment table needs an actor and a policy on the command.
