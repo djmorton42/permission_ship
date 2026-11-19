@@ -112,7 +112,7 @@ Credentials are in a global `identities` table. Reason: a person has one passwor
 
 ### Session lifetime
 
-- A session ends 12 hours after login (`Session::LIFETIME`). Reason: school computers are shared, and a school day fits in 12 hours.
+- A session ends 9 hours after login (`Session::LIFETIME`). Reason: a session must not last forever, and 9 hours covers a working day.
 - The server decides. `sessions.expires_at` is the end time. A session at or after its end time is not logged in, everywhere the app reads a session (`Session.active_at`).
 - The cookie expires at the same time, so the browser deletes it. The expiry is also in the signed cookie value, so Rails rejects an old cookie that a client still sends.
 - `Authentication::DeleteExpiredSessionsJob` deletes ended sessions every hour (`config/recurring.yml`).
