@@ -41,7 +41,7 @@ In development, `bin/rails db:seed` (and `db:prepare` on a new database) loads t
 | `gwendolyn.brightshield@united-realms.example` | Quest Preparatory Academy |
 | `morgan.crossway@example.com` | Schools in two boards (shows the organization picker) |
 
-The full list is in `backend/db/seeds/demo.rb`.
+The full list is in `backend/db/seeds/demo_data.rb`. In development, the login page also lists every board, school and login. Pick a login to fill in the form. The list comes from `GET /api/v1/development/demo_accounts`, which exists only in development and test.
 
 ## Common tasks
 

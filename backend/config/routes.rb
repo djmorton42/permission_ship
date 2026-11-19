@@ -12,6 +12,13 @@ Rails.application.routes.draw do
       resource :session, only: %i[show create destroy] do
         resource :organization, only: :create, controller: "session_organizations"
       end
+
+      # Demo logins for the login page. Development and test only.
+      if Rails.env.local?
+        namespace :development do
+          resource :demo_accounts, only: :show
+        end
+      end
     end
   end
 end

@@ -1,6 +1,8 @@
 // A fake of the Rails session API (/api/v1/session), installed as global fetch.
 // It follows the contract in backend/spec/requests/api/v1/session_spec.rb.
 
+import type { DemoAccounts } from '../features/authentication/demoAccountsApi'
+
 type Organization = { id: string; name: string }
 
 export type FakeAccount = {
@@ -16,7 +18,8 @@ const json = (status: number, body: unknown) =>
 const error = (status: number, code: string, message: string) =>
   json(status, { errors: [{ field: null, code, message }] })
 
-export function installFakeSessionApi(accounts: FakeAccount[]) {
+// demoAccounts: the response of the development-only demo accounts endpoint. Without it, 404.
+export function installFakeSessionApi(accounts: FakeAccount[], { demoAccounts }: { demoAccounts?: DemoAccounts } = {}) {
   let account: FakeAccount | null = null
   let organizationId: string | null = null
 
@@ -60,6 +63,9 @@ export function installFakeSessionApi(accounts: FakeAccount[]) {
       account = null
       organizationId = null
       return new Response(null, { status: 204 })
+    }
+    if (url.endsWith('/api/v1/development/demo_accounts') && method === 'GET' && demoAccounts) {
+      return json(200, demoAccounts)
     }
     return error(404, 'not_found', `No fake for ${method} ${url}`)
   }

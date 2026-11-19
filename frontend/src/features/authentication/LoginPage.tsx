@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { errorMessage } from '../../lib/api'
+import { DemoAccounts } from './DemoAccounts'
 import { logIn, sessionQueryKey } from './sessionApi'
 
 export function LoginPage() {
@@ -68,6 +69,14 @@ export function LoginPage() {
           {login.isPending ? 'Logging in…' : 'Log in'}
         </button>
       </form>
+      {import.meta.env.DEV && (
+        <DemoAccounts
+          onPick={(pickedEmail, pickedPassword) => {
+            setEmail(pickedEmail)
+            setPassword(pickedPassword)
+          }}
+        />
+      )}
     </section>
   )
 }

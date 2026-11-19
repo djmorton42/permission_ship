@@ -59,7 +59,7 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 - [ ] Push the useful_prompts repo. Then run `bin/sync-guidelines` with no override. Result: `docs/guidelines/SOURCE` records the GitHub URL.
 - [ ] Set up the database roles in CI and production. Production needs `PRIMARY_DATABASE_URL` (app role) and `OWNER_DATABASE_URL` (owner role), and a password for `permishly_app`.
 - [ ] Add a shared spec example for tenant isolation, so each query spec does not write its own.
-- [ ] Add commands to create organizations, schools, users and school administrators. Then make `db/seeds/demo.rb` use them.
+- [ ] Add commands to create organizations, schools, users and school administrators. Then make `db/seeds/demo_data.rb` use them.
 - [ ] Add a serializer for response DTOs. DTOs define `as_json` for now.
 - [ ] Build `Idempotency-Key` support (storage, controller support, React header) before the first payment or notification command.
 - [ ] Testing setup:
