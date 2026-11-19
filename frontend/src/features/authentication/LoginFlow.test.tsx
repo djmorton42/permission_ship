@@ -47,7 +47,14 @@ describe('School administrator login', () => {
   it('sends a visitor who is not logged in to the login page', async () => {
     renderRoute('/')
 
-    expect(await screen.findByRole('heading', { name: 'Log in to Permishly' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Log in to Permission Ship' })).toBeInTheDocument()
+  })
+
+  it('shows the Permission Ship logo on the login page, and the wordmark in the header', async () => {
+    renderRoute('/login')
+
+    expect(await screen.findByRole('img', { name: 'Permission Ship logo' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Permission Ship' })).toHaveAttribute('href', '/')
   })
 
   it('logs in and shows the organization and the schools the administrator manages', async () => {
@@ -66,7 +73,7 @@ describe('School administrator login', () => {
     await logIn('marsha.deepwater@eldritch-shores.example', 'wrong password')
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Email or password is incorrect.')
-    expect(screen.getByRole('heading', { name: 'Log in to Permishly' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Log in to Permission Ship' })).toBeInTheDocument()
   })
 
   it('asks a person in two organizations to pick one, then shows that organization', async () => {
@@ -86,6 +93,6 @@ describe('School administrator login', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Log out' }))
 
-    expect(await screen.findByRole('heading', { name: 'Log in to Permishly' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Log in to Permission Ship' })).toBeInTheDocument()
   })
 })

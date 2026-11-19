@@ -24,7 +24,7 @@ module CrossSiteRequestProtection
     return if SAFE_METHODS.include?(request.method)
 
     unless allowed_origin?
-      return render_request_error(:forbidden, "origin_not_allowed", "This request must come from the Permishly app.")
+      return render_request_error(:forbidden, "origin_not_allowed", "This request must come from the Permission Ship app.")
     end
 
     if BODY_METHODS.include?(request.method) && request.media_type != Mime[:json].to_s

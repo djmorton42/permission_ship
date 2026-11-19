@@ -15,11 +15,11 @@ export function HomePage() {
   return (
     <section className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold">{data.organization.name}</h1>
+        <h1 className="text-2xl font-bold text-brand-900">{data.organization.name}</h1>
         <p className="text-sm text-slate-600">Signed in as {data.user.name}</p>
       </div>
       <div className="rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="mb-2 font-medium">Schools you administer</h2>
+        <h2 className="mb-2 font-medium text-brand-800">Schools you administer</h2>
         {data.administered_schools.length === 0 ? (
           <p className="text-sm text-slate-600">You do not administer a school.</p>
         ) : (

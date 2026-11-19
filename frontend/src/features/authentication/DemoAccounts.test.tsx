@@ -79,7 +79,7 @@ describe('Demo accounts on the login page', () => {
 
     renderRoute('/login')
 
-    await screen.findByRole('heading', { name: 'Log in to Permishly' })
+    await screen.findByRole('heading', { name: 'Log in to Permission Ship' })
     await vi.waitFor(() => expect(requests.some((url) => url.endsWith('/development/demo_accounts'))).toBe(true))
     await new Promise((resolve) => setTimeout(resolve, 0))
     expect(screen.queryByRole('region', { name: 'Demo accounts' })).not.toBeInTheDocument()

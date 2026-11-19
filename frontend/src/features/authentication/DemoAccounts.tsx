@@ -34,7 +34,7 @@ export function DemoAccounts({ onPick }: { onPick: (email: string, password: str
                       key={administrator.email}
                       type="button"
                       onClick={() => onPick(administrator.email, data.password)}
-                      className="rounded border border-slate-300 bg-white px-2 py-1 text-left hover:border-blue-500"
+                      className="rounded border border-slate-300 bg-white px-2 py-1 text-left hover:border-brand-600 hover:bg-brand-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
                     >
                       <span className="block font-medium">{administrator.name}</span>{' '}
                       <span className="block font-mono text-xs text-slate-600">{administrator.email}</span>

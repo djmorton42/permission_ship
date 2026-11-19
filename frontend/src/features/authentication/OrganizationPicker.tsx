@@ -12,7 +12,7 @@ export function OrganizationPicker({ organizations }: { organizations: Summary[]
 
   return (
     <section className="mx-auto max-w-sm space-y-4 pt-8">
-      <h1 className="text-2xl font-bold">Choose an organization</h1>
+      <h1 className="text-2xl font-bold text-brand-900">Choose an organization</h1>
       <div className="space-y-2">
         {organizations.map((organization) => (
           <button
@@ -20,7 +20,7 @@ export function OrganizationPicker({ organizations }: { organizations: Summary[]
             type="button"
             disabled={choose.isPending}
             onClick={() => choose.mutate(organization.id)}
-            className="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-left hover:border-blue-600 disabled:opacity-50"
+            className="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-left hover:border-brand-600 hover:bg-brand-50 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
           >
             {organization.name}
           </button>

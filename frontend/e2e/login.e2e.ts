@@ -8,7 +8,8 @@ const administrator = {
 
 test('a school administrator logs in, sees their school, and logs out', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: 'Log in to Permishly' })).toBeVisible()
+  await expect(page).toHaveTitle('Permission Ship')
+  await expect(page.getByRole('heading', { name: 'Log in to Permission Ship' })).toBeVisible()
 
   await page.getByLabel('Email').fill(administrator.email)
   await page.getByLabel('Password').fill(administrator.password)
@@ -23,9 +24,9 @@ test('a school administrator logs in, sees their school, and logs out', async ({
   await expect(page.getByText('Signed in as Marsha Deepwater')).toBeVisible()
 
   await page.getByRole('button', { name: 'Log out' }).click()
-  await expect(page.getByRole('heading', { name: 'Log in to Permishly' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Log in to Permission Ship' })).toBeVisible()
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: 'Log in to Permishly' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Log in to Permission Ship' })).toBeVisible()
 })
 
 test('a wrong password shows an error', async ({ page }) => {

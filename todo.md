@@ -78,6 +78,13 @@ Open decisions and pending work. When a decision is made, add it to `architectur
   - [ ] End all sessions of an identity when its password changes.
   - [ ] Audit log of logins, failed logins and logouts (see "Auditing and history").
   - [ ] Security review by another person (for example, `/security-review` or a pen test) before real student data.
+- [ ] Rename the internal name Permishly to Permission Ship. The app shows the new name, logos and colours already (`etc/brand/`). Still old:
+  - [ ] The Rails app module (`module Permishly` in `config/application.rb`), and `permishly-api` in `backend/Dockerfile`.
+  - [ ] Database names (`permishly_development`, `permishly_test`, `permishly_production`) and roles (`permishly` owner, `permishly_app`, `permishly_cross_tenant_reader`): `database.yml`, `cable.yml`, `docker-compose.yml`, `db/privileges.sql`, the `identity_organization_ids` migration, and `.github/workflows/ci.yml`. A role rename in a migration needs a new migration, not an edit. Existing local databases need a rebuild.
+  - [ ] `permishly-frontend` in `frontend/package.json`.
+  - [ ] The demo password `permishly-demo` (`db/seeds/demo_data.rb`, specs, Playwright and Vitest tests, README).
+  - [ ] Docs: `README.md`, `architecture.md`, `CLAUDE.md`, `todo.md`. Leave the dated walkthroughs in `docs/walkthroughs/` as they are.
+  - [ ] The local directory (`~/source/permishly`). The GitHub repository is `permission_ship` already.
 - [ ] Before production:
   - [ ] Add `strong_migrations` and change the migration rules.
   - [ ] Set Mission Control credentials for `/jobs`.

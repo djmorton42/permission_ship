@@ -1,1 +1,23 @@
 @import "tailwindcss";
+
+/* Permission Ship brand colours, from the logo (etc/brand/).
+   brand-900 is the dark green of "permission". brand-400 is the light green of "ship".
+   Use brand-* for actions, links and focus. Keep red for errors and slate for neutral text. */
+@theme {
+  --color-brand-50: #f2f7f1;
+  --color-brand-100: #e2ede0;
+  --color-brand-200: #c5dbc1;
+  --color-brand-300: #a1c39c;
+  --color-brand-400: #7aa276;
+  --color-brand-500: #5a8858;
+  --color-brand-600: #3d6e45;
+  --color-brand-700: #235638;
+  --color-brand-800: #124632;
+  --color-brand-900: #073a2d;
+  --color-brand-950: #042319;
+}
+
+::selection {
+  background-color: var(--color-brand-200);
+  color: var(--color-brand-950);
+}
