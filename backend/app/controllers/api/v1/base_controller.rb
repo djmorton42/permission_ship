@@ -6,6 +6,7 @@ module Api
       include ActionController::Cookies
       include SessionCookie
       include CrossSiteRequestProtection
+      include SignedInSession
 
       # Responses hold a person's data. Browsers and proxies must not keep a copy,
       # for example on a shared school computer after logout.

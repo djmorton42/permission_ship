@@ -1,13 +1,20 @@
 module Api
   module V1
     class SessionsController < BaseController
+      # Login and logout work without a session. Reading the session works before
+      # the person picks an organization, because it returns the organizations to pick from.
+      allow_without_session only: %i[create destroy]
+      allow_without_organization only: :show
+
       rate_limit to: 10, within: 3.minutes, only: :create, with: -> {
         render json: { errors: [ { field: nil, code: "rate_limited", message: "Too many login attempts. Try again later." } ] },
                status: :too_many_requests
       }
 
       def show
-        render_result(Authentication::CurrentSessionQuery.call(session_id: session_cookie_id))
+        render_result(Authentication::CurrentSessionQuery.call(
+          identity_id: current_session.identity_id, organization_id: current_session.organization_id
+        ))
       end
 
       def create

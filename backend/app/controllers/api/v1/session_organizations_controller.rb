@@ -2,9 +2,13 @@ module Api
   module V1
     # The person picks an organization after login.
     class SessionOrganizationsController < BaseController
+      allow_without_organization only: :create
+
+      # The only action that takes an organization ID from the request.
+      # ChooseOrganization checks that the identity has a user there.
       def create
         render_result(Authentication::ChooseOrganization.call(
-          session_id: session_cookie_id, organization_id: params[:organization_id]
+          session_id: current_session.id, organization_id: params[:organization_id]
         ))
       end
     end
