@@ -24,7 +24,7 @@ module Api
         )
         return render_failure(result) if result.failure?
 
-        start_session_cookie(result.value.session_id)
+        start_session_cookie(result.value.session_id, expires_at: result.value.expires_at)
         head :no_content
       end
 

@@ -110,6 +110,14 @@ Credentials are in a global `identities` table. Reason: a person has one passwor
 - `POST /api/v1/session/organization` is the only action that reads an organization ID from the request. `ChooseOrganization` checks that the identity has a user there.
 - `current_session` has the session ID, the identity ID, and the organization ID. The actor for authorization is still an open decision (`todo.md`).
 
+### Session lifetime
+
+- A session ends 12 hours after login (`Session::LIFETIME`). Reason: school computers are shared, and a school day fits in 12 hours.
+- The server decides. `sessions.expires_at` is the end time. A session at or after its end time is not logged in, everywhere the app reads a session (`Session.active_at`).
+- The cookie expires at the same time, so the browser deletes it. The expiry is also in the signed cookie value, so Rails rejects an old cookie that a client still sends.
+- `Authentication::DeleteExpiredSessionsJob` deletes ended sessions every hour (`config/recurring.yml`).
+- An idle timeout is an open decision (`todo.md`).
+
 ### Sessions and CSRF
 
 `SameSite=Lax` stops the browser from sending the session cookie with a cross-site POST. It does not stop a cross-site POST from setting a new cookie. Without more protection, a form on another site could log the browser in to an attacker's account (login CSRF).

@@ -36,7 +36,7 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 ### Product and platform
 
 - Authentication: OmniAuth for Google? Tokens for a future mobile app? (Password login with cookie sessions is in `architecture.md`.)
-- Sessions: what are the absolute lifetime and the idle timeout? The cookie is permanent, and the `sessions` table has no expiry. School computers are often shared.
+- Sessions: do we also need an idle timeout? Sessions end 12 hours after login (see "Session lifetime" in `architecture.md`), but a session that nobody uses stays valid until then. School computers are often shared.
 - Password rules: minimum length, and a check against breached passwords?
 - MFA: required for administrators? Which method (TOTP, passkeys)?
 - Authorization inside an organization: row-level security separates organizations only. A school administrator and a parent in the same organization see the same rows unless a command checks the actor. The first student, parent or payment table needs an actor and a policy on the command.
@@ -64,12 +64,10 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 - [ ] Build `Idempotency-Key` support (storage, controller support, React header) before the first payment or notification command.
 - [ ] Testing setup:
   - [ ] Add WebMock and block external network access in specs.
-  - [ ] Include `ActiveSupport::Testing::TimeHelpers` in RSpec.
 - [ ] Add `bin/sync-guidelines --check` to CI. CI needs read access to the private useful_prompts repo (for example, a deploy key).
 - [ ] Authentication security (gaps found after the first login feature):
-  - [ ] Expire sessions on the server (see "Sessions" above). Delete expired session rows with a job.
   - [ ] Rate limit: also limit by account, not only by IP address. Configure a shared production cache store, because `rate_limit` keeps its counts in `Rails.cache` and the default file store is per machine. Deny the login when the counter does not increment (a null store now disables the limit). Set the trusted proxies, so `request.remote_ip` is the client address.
-  - [ ] Session expiry also: when a login starts a new session, older sessions stay valid. The stored IP address and user agent are never compared.
+  - [ ] Sessions: when a login starts a new session, older sessions of that identity stay valid until they end. The stored IP address and user agent are never compared.
   - [ ] Creating a user for an email that already has an identity: send an invitation that the person accepts. Do not attach the existing identity directly. Development seeds can keep creating rows directly.
   - [ ] When a user is removed: end or move the sessions in that organization. Now `GET /api/v1/session` returns 401 even if the identity has another organization. When the identity has no users left, delete it and its sessions.
   - [ ] Before the first deployed environment: refuse to boot when the `primary` database role has `rolbypassrls` or is a superuser. Set `config.hosts`. Decide whether `GET /api/v1/health` stays public (it reports database and job status).

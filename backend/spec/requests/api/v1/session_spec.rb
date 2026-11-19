@@ -127,7 +127,7 @@ RSpec.describe "Session API", type: :request do
 
   it "does not accept a session cookie that the server did not sign" do
     create_school_administrator(identity:, organization: eldritch, name: "Zadok Allen", schools: [ innsmouth ])
-    session = Session.create!(identity:, organization: eldritch)
+    session = Session.create!(identity:, organization: eldritch, expires_at: 1.hour.from_now)
 
     cookies[:session_id] = session.id
     get "/api/v1/session"

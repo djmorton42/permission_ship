@@ -116,7 +116,8 @@ CREATE TABLE public.sessions (
     ip_address character varying,
     user_agent character varying,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    expires_at timestamp(6) without time zone NOT NULL
 );
 
 
@@ -881,6 +882,13 @@ CREATE UNIQUE INDEX index_schools_on_organization_id_and_id ON public.schools US
 
 
 --
+-- Name: index_sessions_on_expires_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_sessions_on_expires_at ON public.sessions USING btree (expires_at);
+
+
+--
 -- Name: index_sessions_on_identity_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1313,6 +1321,7 @@ ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261119000001'),
 ('20261117000007'),
 ('20261117000006'),
 ('20261117000005'),

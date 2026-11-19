@@ -10,7 +10,7 @@ class Authentication::LogIn < ApplicationCommand
   attribute :user_agent, :string
   validates :email, :password, presence: true
 
-  Started = Data.define(:session_id)
+  Started = Data.define(:session_id, :expires_at)
 
   def perform
     # authenticate_by takes the same time for an unknown email and a wrong password.
@@ -20,13 +20,15 @@ class Authentication::LogIn < ApplicationCommand
     organization_ids = Identity.organization_ids_for(identity.id)
     return no_organization if organization_ids.empty?
 
+    now = Time.current
     session = Session.create!(
       identity:,
       organization_id: (organization_ids.first if organization_ids.one?),
       ip_address:,
-      user_agent:
+      user_agent:,
+      expires_at: now + Session::LIFETIME
     )
-    success(Started.new(session_id: session.id))
+    success(Started.new(session_id: session.id, expires_at: session.expires_at))
   end
 
   private
