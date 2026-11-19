@@ -7,7 +7,7 @@ class Authentication::ChooseOrganization < ApplicationCommand
   validates :organization_id, presence: true
 
   def perform
-    session = Session.lock.find_by(id: session_id)
+    session = Session.lock.active_at(Time.current).find_by(id: session_id)
     return Authentication.not_logged_in unless session
 
     unless Identity.organization_ids_for(session.identity_id).include?(organization_id)
