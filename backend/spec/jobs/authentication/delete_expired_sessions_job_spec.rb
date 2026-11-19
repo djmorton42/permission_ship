@@ -4,8 +4,8 @@ RSpec.describe Authentication::DeleteExpiredSessionsJob do
   let(:identity) { create_identity(email: "zadok.allen@innsmouth.example", password: "deep ones rising") }
 
   it "deletes the sessions that have ended" do
-    ended = Session.create!(identity:, expires_at: 1.minute.ago)
-    active = Session.create!(identity:, expires_at: 1.minute.from_now)
+    ended = Session.create!(identity:, expires_at: 1.minute.ago, last_active_at: 2.minutes.ago)
+    active = Session.create!(identity:, expires_at: 1.minute.from_now, last_active_at: 2.minutes.ago)
 
     described_class.perform_now
 

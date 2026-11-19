@@ -117,7 +117,8 @@ CREATE TABLE public.sessions (
     user_agent character varying,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    expires_at timestamp(6) without time zone NOT NULL
+    expires_at timestamp(6) without time zone NOT NULL,
+    last_active_at timestamp(6) without time zone NOT NULL
 );
 
 
@@ -896,6 +897,13 @@ CREATE INDEX index_sessions_on_identity_id ON public.sessions USING btree (ident
 
 
 --
+-- Name: index_sessions_on_last_active_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_sessions_on_last_active_at ON public.sessions USING btree (last_active_at);
+
+
+--
 -- Name: index_sessions_on_organization_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1321,6 +1329,7 @@ ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261119000002'),
 ('20261119000001'),
 ('20261117000007'),
 ('20261117000006'),

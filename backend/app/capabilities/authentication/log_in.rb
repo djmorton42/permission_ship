@@ -26,7 +26,8 @@ class Authentication::LogIn < ApplicationCommand
       organization_id: (organization_ids.first if organization_ids.one?),
       ip_address:,
       user_agent:,
-      expires_at: now + Session::LIFETIME
+      expires_at: now + Session::LIFETIME,
+      last_active_at: now
     )
     success(Started.new(session_id: session.id, expires_at: session.expires_at))
   end

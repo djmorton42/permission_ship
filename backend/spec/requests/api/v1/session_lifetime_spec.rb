@@ -1,7 +1,8 @@
 require "rails_helper"
 
 # A session ends 9 hours after login, on the server and in the browser.
-# See "Session lifetime" in architecture.md.
+# It also ends after 30 minutes without a request, for example on a shared computer
+# that the person walked away from. See "Session lifetime" in architecture.md.
 RSpec.describe "Session lifetime", type: :request do
   let(:eldritch) { Organization.create!(name: "Eldritch Shores Board of Education") }
   let(:realms) { Organization.create!(name: "United Realms District School Board") }
@@ -87,6 +88,31 @@ RSpec.describe "Session lifetime", type: :request do
       stay_active(from: second_login, to: second_login + 8.hours + 59.minutes)
 
       expect(session_status_at(second_login + 8.hours + 59.minutes)).to eq(200)
+    end
+  end
+
+  context "when the person stops using the app" do
+    before { create_school_administrator(identity:, organization: eldritch, name: "Zadok Allen") }
+
+    it "keeps the session for 30 minutes without a request" do
+      log_in
+
+      expect(session_status_at(login_time + 29.minutes + 59.seconds)).to eq(200)
+    end
+
+    it "ends the session after 30 minutes without a request" do
+      log_in
+
+      expect(session_status_at(login_time + 30.minutes)).to eq(401)
+      expect(response.parsed_body["errors"].map { it["code"] }).to eq([ "not_logged_in" ])
+    end
+
+    it "starts the 30 minutes again with each request" do
+      log_in
+
+      expect(session_status_at(login_time + 20.minutes)).to eq(200)
+      expect(session_status_at(login_time + 49.minutes)).to eq(200)
+      expect(session_status_at(login_time + 79.minutes)).to eq(401)
     end
   end
 
