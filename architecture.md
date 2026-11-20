@@ -9,6 +9,7 @@ Architecture rules for Permishly. Open decisions and pending work are in `todo.m
 - Commands and queries use Active Record directly.
 - Commands and queries use the same database. Reason: a write is visible to the next query immediately.
 - We do not use event sourcing, a command bus, separate read stores, or asynchronous command processing by default. Add one only when a concrete requirement needs it.
+- Prefer simple code. Do not make code more complex to handle an edge case that is unlikely to happen. Reason: complexity has a cost in every later change. Handling a rare edge case is a trade-off decision for the team.
 
 | Component | Responsibility |
 | --- | --- |
