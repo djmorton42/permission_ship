@@ -20,6 +20,10 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 
 - Enrollment history is a requirement. Do we model it explicitly (effective-dated records) or use a general audit trail?
 - What else needs an audit trail? For example: permissions, payments, role changes, data access.
+- Which reads are sensitive enough to audit? For example: student records, medical and contact details, exports. (How we record audited reads is in "Auditing" in `architecture.md`.)
+- Which audited reads must fail when the audit record cannot be written?
+- How does a query result give its subject IDs (for example, which students) to the caller that writes the audit record?
+- What does an audit record contain? At least the actor, the organization, the query or command, and the subject IDs.
 
 ### Student data privacy
 

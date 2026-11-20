@@ -209,6 +209,14 @@ A command is idempotent when a second run with the same input has no additional 
 Enrollments::RosterQuery.call(school_id:, page:)
 ```
 
+## Auditing
+
+- A command writes its audit record in its own transaction. Reason: the audit record and the change commit or roll back together.
+- Queries stay read-only. The caller (for example, a controller) records an audited read after the query returns. It calls an audit command. Reason: an audit record is a side effect of the request, not of the query.
+- Record audited reads synchronously, in the database. Do not record them through a job. Reason: an enqueue is also a database write, so a job gives no gain. A synchronous write also lets a read fail when its audit record cannot be written.
+- Record denied reads as well as successful reads.
+- If audit records must go to an external system, write them to the database first. Then send them with a job.
+
 ## Loading data
 
 - `strict_loading_by_default` is on. Reason: loading stays explicit, and N+1 queries raise errors.

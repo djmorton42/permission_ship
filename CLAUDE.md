@@ -2,7 +2,8 @@
 
 - Architecture rules: `architecture.md`. Open decisions and pending work: `todo.md`. Setup and commands: `README.md`.
 - Writing style for docs and replies: `docs/guidelines/language.txt`. Testing rules: `docs/guidelines/testing.txt`.
-- Make changes on a branch, and merge them to `main` through a pull request. Do not commit to `main` unless the user says so for that change. Start the branch from an up-to-date `main`.
+- Make functional changes (code, database schema, build system, CI) on a branch, and merge them to `main` through a pull request. Start the branch from an up-to-date `main`.
+- Commit changes to docs about what we build or how we build it (for example `architecture.md`, `todo.md`, `CLAUDE.md`) directly to `main`.
 - Never push without explicit permission from the user for that push. Permission for one push does not cover later pushes. This includes pushing a branch and opening a pull request.
 - Run Ruby and Node through mise, for example `mise exec -- bundle exec rspec`. Reason: the shell may not have the pinned versions.
 
