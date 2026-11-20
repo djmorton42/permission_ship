@@ -1,3 +1,5 @@
+# typed: strict
+
 # A user who administers a school. Capability: Accounts.
 class SchoolAdministrator < ApplicationRecord
   belongs_to :organization

@@ -1,3 +1,5 @@
+# typed: strict
+
 # Checks an email and password, and starts a session.
 # If the identity has a user in one organization, the session is in that organization.
 # If it has users in more than one, the person picks one (ChooseOrganization).
@@ -10,8 +12,12 @@ class Authentication::LogIn < ApplicationCommand
   attribute :user_agent, :string
   validates :email, :password, presence: true
 
-  Started = Data.define(:session_id, :expires_at)
+  class Started < T::Struct
+    const :session_id, String
+    const :expires_at, ActiveSupport::TimeWithZone
+  end
 
+  sig { override.returns(UseCaseResult[Started]) }
   def perform
     # authenticate_by takes the same time for an unknown email and a wrong password.
     identity = Identity.authenticate_by(email:, password:)
@@ -36,10 +42,12 @@ class Authentication::LogIn < ApplicationCommand
 
   # One message for an unknown email and a wrong password, so login does not
   # reveal which email addresses have accounts.
+  sig { returns(UseCaseResult::Failure) }
   def invalid_credentials
     failure(:unauthenticated, code: "invalid_credentials", message: "Email or password is incorrect.")
   end
 
+  sig { returns(UseCaseResult::Failure) }
   def no_organization
     failure(:unauthenticated, code: "no_organization", message: "Your account is not part of an organization.")
   end

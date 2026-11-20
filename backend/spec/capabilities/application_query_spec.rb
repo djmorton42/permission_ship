@@ -1,3 +1,5 @@
+# typed: false
+
 require "rails_helper"
 
 RSpec.describe ApplicationQuery do
@@ -5,10 +7,9 @@ RSpec.describe ApplicationQuery do
   let(:realms) { Organization.create!(name: "United Realms District School Board") }
 
   let(:school_names) do
-    Class.new(ApplicationQuery) do
-      def self.name = "TestQuery"
+    stub_const("TestQuery", Class.new(ApplicationQuery) do
       def perform = success(School.order(:name).pluck(:name))
-    end
+    end)
   end
 
   before do
@@ -25,10 +26,9 @@ RSpec.describe ApplicationQuery do
   end
 
   it "does not write" do
-    sneaky = Class.new(ApplicationQuery) do
-      def self.name = "TestQuery"
+    sneaky = stub_const("TestQuery", Class.new(ApplicationQuery) do
       def perform = success(School.update_all(name: "Renamed"))
-    end
+    end)
 
     expect { sneaky.call(organization_id: eldritch.id) }.to raise_error(ActiveRecord::ReadOnlyError)
     expect(in_organization(eldritch) { School.pluck(:name) }).to eq([ "The School Beyond the Pines" ])
@@ -40,12 +40,11 @@ RSpec.describe ApplicationQuery, "transaction" do
   self.use_transactional_tests = false
 
   it "runs in a read-only transaction" do
-    read_only_setting = Class.new(ApplicationQuery) do
-      def self.name = "TestQuery"
+    read_only_setting = stub_const("TestQuery", Class.new(ApplicationQuery) do
       runs_without_organization
 
       def perform = success(ApplicationRecord.connection.select_value("SHOW transaction_read_only"))
-    end
+    end)
 
     expect(read_only_setting.call.value).to eq("on")
   end

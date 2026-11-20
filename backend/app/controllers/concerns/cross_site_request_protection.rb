@@ -1,3 +1,5 @@
+# typed: strict
+
 # Protects cookie-authenticated writes from other sites, including login CSRF.
 # SameSite=Lax stops the browser from sending the session cookie with a cross-site
 # POST, but it does not stop the response from setting a new cookie.
@@ -9,7 +11,11 @@
 #   and a cross-origin fetch with JSON needs a CORS preflight that other origins do not pass.
 # See "Sessions and CSRF" in architecture.md.
 module CrossSiteRequestProtection
+  extend T::Sig
+  extend T::Helpers
   extend ActiveSupport::Concern
+
+  requires_ancestor { ActionController::API }
 
   SAFE_METHODS = %w[GET HEAD OPTIONS].freeze
   BODY_METHODS = %w[POST PUT PATCH].freeze
@@ -20,6 +26,7 @@ module CrossSiteRequestProtection
 
   private
 
+  sig { void }
   def reject_cross_site_request
     return if SAFE_METHODS.include?(request.method)
 
@@ -32,11 +39,13 @@ module CrossSiteRequestProtection
     end
   end
 
+  sig { returns(T::Boolean) }
   def allowed_origin?
     origin = request.origin
     origin == request.base_url || Rails.configuration.x.allowed_origins.include?(origin)
   end
 
+  sig { params(status: Symbol, code: String, message: String).void }
   def render_request_error(status, code, message)
     render json: { errors: [ { field: nil, code:, message: } ] }, status:
   end

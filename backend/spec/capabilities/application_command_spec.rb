@@ -1,3 +1,5 @@
+# typed: false
+
 require "rails_helper"
 
 RSpec.describe ApplicationCommand do
@@ -6,8 +8,7 @@ RSpec.describe ApplicationCommand do
 
   # Opens a school. Rejects names that the board has banned.
   let(:open_school) do
-    Class.new(ApplicationCommand) do
-      def self.name = "TestCommand"
+    stub_const("TestCommand", Class.new(ApplicationCommand) do
       attribute :name, :string
       attribute :banned_name, :string
       validates :name, presence: true
@@ -18,7 +19,7 @@ RSpec.describe ApplicationCommand do
 
         success(school.id)
       end
-    end
+    end)
   end
 
   def school_names(organization) = in_organization(organization) { School.order(:name).pluck(:name) }
@@ -62,15 +63,14 @@ RSpec.describe ApplicationCommand do
   end
 
   it "can run without an organization when it declares that" do
-    rename_board = Class.new(ApplicationCommand) do
-      def self.name = "TestCommand"
+    rename_board = stub_const("TestCommand", Class.new(ApplicationCommand) do
       runs_without_organization
       attribute :name, :string
 
       def perform
         success(Organization.create!(name:).id)
       end
-    end
+    end)
 
     result = rename_board.call(name: "Central Directorate of Approved Learning")
 
@@ -78,15 +78,26 @@ RSpec.describe ApplicationCommand do
   end
 
   it "uses a dependency default unless the caller passes one" do
-    greet = Class.new(ApplicationCommand) do
-      def self.name = "TestCommand"
+    greet = stub_const("TestCommand", Class.new(ApplicationCommand) do
       runs_without_organization
-      dependency :greeting, default: -> { "Hello" }
+      dependency :greeting, type: String, default: -> { "Hello" }
 
       def perform = success(greeting)
-    end
+    end)
 
     expect(greet.call.value).to eq("Hello")
     expect(greet.call({}, greeting: "Ia!").value).to eq("Ia!")
+  end
+
+  it "rejects a dependency that is not of its declared type" do
+    greet = stub_const("TestCommand", Class.new(ApplicationCommand) do
+      runs_without_organization
+      dependency :greeting, type: String, default: -> { :hello }
+
+      def perform = success(greeting)
+    end)
+
+    expect { greet.call({}, greeting: 42) }.to raise_error(TypeError, /greeting must be a String/)
+    expect { greet.call }.to raise_error(TypeError, /greeting must be a String/)
   end
 end

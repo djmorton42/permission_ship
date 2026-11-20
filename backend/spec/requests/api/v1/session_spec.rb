@@ -1,3 +1,5 @@
+# typed: false
+
 require "rails_helper"
 
 # Login for school administrators. See "Identities and login" in architecture.md.

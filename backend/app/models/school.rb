@@ -1,3 +1,5 @@
+# typed: strict
+
 # Capability: Schools.
 class School < ApplicationRecord
   belongs_to :organization

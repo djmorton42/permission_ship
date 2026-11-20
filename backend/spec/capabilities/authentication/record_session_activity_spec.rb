@@ -1,3 +1,5 @@
+# typed: false
+
 require "rails_helper"
 
 # A request restarts the idle timeout of its own session only. Another person's requests

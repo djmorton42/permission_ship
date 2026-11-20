@@ -8,6 +8,16 @@
 class Authentication::ActiveSessionQuery
   include GeneratedAttributeMethods
 
+  class << self
+    sig do
+      params(
+        inputs: ::UseCase::Inputs,
+        keywords: Object
+      ).returns(UseCaseResult[::Authentication::ActiveSessionQuery::ActiveSession])
+    end
+    def call(inputs = {}, **keywords); end
+  end
+
   module GeneratedAttributeMethods
     sig { returns(T.nilable(::String)) }
     def organization_id; end

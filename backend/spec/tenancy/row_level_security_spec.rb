@@ -1,3 +1,5 @@
+# typed: false
+
 require "rails_helper"
 
 # Row-level security keeps each organization's data separate.

@@ -1,3 +1,5 @@
+# typed: false
+
 require "rails_helper"
 require Rails.root.join("db/seeds/demo_data").to_s
 

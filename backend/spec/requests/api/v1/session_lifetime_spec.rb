@@ -1,3 +1,5 @@
+# typed: false
+
 require "rails_helper"
 
 # A session ends 9 hours after login, on the server and in the browser.

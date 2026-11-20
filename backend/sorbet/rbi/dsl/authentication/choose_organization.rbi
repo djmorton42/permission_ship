@@ -8,6 +8,11 @@
 class Authentication::ChooseOrganization
   include GeneratedAttributeMethods
 
+  class << self
+    sig { params(inputs: ::UseCase::Inputs, keywords: Object).returns(UseCaseResult[::NilClass]) }
+    def call(inputs = {}, **keywords); end
+  end
+
   module GeneratedAttributeMethods
     sig { returns(T.nilable(::String)) }
     def organization_id; end
