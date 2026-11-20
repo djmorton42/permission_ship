@@ -1,0 +1,17 @@
+**Version control**
+
+- Make functional changes (code, database schema, build system, CI) on a branch. Merge them to the main branch through a pull request. Start the branch from an up-to-date main branch.
+- Commit changes to docs about what we build or how we build it (for example architecture rules, open decisions, agent instructions) directly to the main branch, unless the project's instructions or memory say otherwise.
+- Never push without explicit permission from the user for that push. Permission for one push does not cover later pushes. This includes pushing a branch and opening a pull request.
+
+**Checks**
+
+- Run the project's checks (tests, linters, type checkers) after every change, before you report the work as done.
+- Report failures with their output. Never claim that a check passed unless you ran it and saw the result.
+
+**Project docs**
+
+- Keep architecture rules in `architecture.md`, open decisions and pending work in `todo.md`, and setup and commands in `README.md`.
+- When a decision is made, add it to `architecture.md` and remove it from `todo.md`.
+- Give a rule a one-line reason when the reason is not obvious.
+- Do not copy rules from the shared guidelines into project docs. Refer to them. Project docs add only project-specific rules and examples.

@@ -9,7 +9,7 @@ Architecture rules for Permishly. Open decisions and pending work are in `todo.m
 - Commands and queries use Active Record directly.
 - Commands and queries use the same database. Reason: a write is visible to the next query immediately.
 - We do not use event sourcing, a command bus, separate read stores, or asynchronous command processing by default. Add one only when a concrete requirement needs it.
-- Prefer simple code. Do not make code more complex to handle an edge case that is unlikely to happen. Reason: complexity has a cost in every later change. Handling a rare edge case is a trade-off decision for the team.
+- General coding rules are in `docs/guidelines/coding.txt`. This file adds the rules for this project.
 
 | Component | Responsibility |
 | --- | --- |
@@ -188,17 +188,12 @@ Steps 2 and 3 run in one transaction.
 
 - Put a rule that applies to one record on its model, as a plain method or a validation. Do not use a callback.
 - Put a rule that spans records, or that more than one command uses, in a policy object in its capability. Do not copy rules between commands.
-- A check that protects a write must use a row lock, optimistic locking (`lock_version`), or a database constraint. Example: "Is there space on the field trip?" Reason: two concurrent requests can both pass a check that only reads.
+- Protect a check that guards a write with a row lock, `lock_version`, or a database constraint. Example: "Is there space on the field trip?"
 
 ### Idempotency
 
-A command is idempotent when a second run with the same input has no additional effect.
-
-- Commands that cost money or contact people (payments, notifications) must be idempotent:
-  - The client sends an `Idempotency-Key` header. React makes a new UUID for each submission.
-  - The server stores the key with the result. A repeated key returns the stored result. The command does not run again.
-  - Calls to providers that support it (for example, payment APIs) pass an idempotency key.
-- Other commands use a unique constraint when a natural key exists. Example: one permission slip for each student and trip. A duplicate returns the existing record.
+- The idempotency key for commands that cost money or contact people is the `Idempotency-Key` header. React makes a new UUID for each submission.
+- Example of a natural key: one permission slip for each student and trip.
 
 ## Queries
 
@@ -265,8 +260,6 @@ Enrollments::RosterQuery.call(school_id:, page:)
 | Models and policies | Business rules and invariants |
 | Database | Always: NOT NULL, foreign keys, unique indexes, check constraints |
 
-- The server is the authority for validation and authorization.
-- Database constraints are the last line of defense.
 
 ## Transactions
 
@@ -277,7 +270,6 @@ Enrollments::RosterQuery.call(school_id:, page:)
 - `ActiveRecord::Rollback` has an effect only at the outermost level. An inner command cannot roll back alone.
 - When a composed command fails, the caller must also return a failure.
 - To recover from a failed inner command, run it in a savepoint (`requires_new: true`). Otherwise its partial writes are committed with the outer command.
-- Do not call external services (payments, email, push) in a transaction. Enqueue a job (see Background jobs).
 
 ## Dependencies
 
@@ -290,16 +282,15 @@ Enrollments::RosterQuery.call(school_id:, page:)
 ## Time
 
 - We do not inject a clock. Reason: Rails and gems read `Time.now`, so a second clock can disagree with them.
-- When "now" is a business input, make it an `as_of` attribute on the command or query. Reason: production code can run "as of" another time, for previews, re-runs, and backfills.
+- When "now" is a business input, make it an `as_of` attribute on the command or query.
 
   ```ruby
   attribute :as_of, :datetime, default: -> { Time.current }
   ```
 
 - Use `as_of` for reminders, digests, deadlines, and history lookups (for example, "which school was the student at on this date").
-- Read the time once in each command or query. Use `as_of` or one local `now`. Do not call `Time.current` more than once. Reason: two reads can fall on different sides of midnight.
 - Tests control time with Rails time helpers (`travel_to`, `freeze_time`), or pass `as_of`.
-- SQL `now()` and Postgres `uuidv7()` use the database clock. Time helpers do not change them. In time-dependent queries, pass the time as a bind parameter instead of `now()`.
+- Postgres `now()` and `uuidv7()` use the database clock. Rails time helpers do not change them.
 
 ## Isolated domain models
 
@@ -328,7 +319,6 @@ Do not add a repository for each table. Do not copy every model into a domain ob
 
 ## Time zones
 
-- Store all times in UTC.
 - Each school has an IANA time zone, for example `America/Toronto`.
 - Calculate reminders, digests, and event times in the school's time zone.
 
@@ -420,21 +410,18 @@ We use Sorbet with tapioca. Signatures are `sig { }` blocks. Reason: Sorbet find
 - `docs/guidelines/` contains copies of files from the useful_prompts repo. That repo is the source of truth.
 - Do not edit the copies. Change the source, then run `bin/sync-guidelines`.
 - `bin/sync-guidelines --check` tells you if the copies are out of date.
-- `docs/guidelines/language.txt` sets the writing style for docs.
+- The files are `workflow.txt`, `coding.txt`, `testing.txt`, and `language.txt`. `CLAUDE.md` says what each one covers.
 
 ## Background jobs
 
 We use Solid Queue. Its tables are in the primary database. Reason: a job is committed or rolled back with the data that enqueues it, so it works as an outbox.
 
 - Use Active Job only. Jobs inherit from `ApplicationJob`. Do not reference `SolidQueue::*` classes or tables in app code. Reason: the backend can change without code changes.
-- A job is thin. It calls a command with its arguments. It contains no business logic.
+- A job calls a command with its arguments.
 - Commands enqueue jobs with `perform_later` or `perform_all_later` in the command's transaction.
 - Do not enqueue jobs from models or callbacks.
 - Keep `enqueue_after_transaction_commit` set to `false`. If it is `true`, jobs are enqueued after commit, so a job and its data are no longer committed together.
 - Specs check enqueued jobs with `have_enqueued_job`.
-- Every job must be idempotent. It must be safe to run two times.
-- Every job must handle a record that is missing or changed. Check the state again before you act.
-- Pass only IDs and primitive values to jobs. Do not pass Active Record models or large payloads.
 - Jobs that touch tenant data take `organization_id` as an argument.
 - For a large send (for example, a board-wide notification), use `perform_all_later` in batches. Make one job for each recipient and channel.
 - Define recurring jobs only in `config/recurring.yml`.
