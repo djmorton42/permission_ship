@@ -396,7 +396,7 @@ We use Sorbet with tapioca. Signatures are `sig { }` blocks. Reason: Sorbet find
   | `Gemfile.lock` | `bin/tapioca gem` |
   | A migration, a model, a command or query, or `app/lib/use_case.rb` | `bin/tapioca dsl` |
 
-- `bin/tapioca dsl` loads the app in the test environment and reads the test database (`sorbet/tapioca/config.yml`). Run `bin/rails db:test:prepare` first. Reason: CI has only the test database.
+- `bin/tapioca dsl` loads the app in the test environment, with eager loading, and reads the test database (`sorbet/tapioca/config.yml`). Run `bin/rails db:test:prepare` first. Reason: CI has only the test database, and eager loading makes the RBI files the same locally and in CI.
 - CI runs `bin/tapioca gem --verify` and `bin/tapioca dsl --verify`. They fail when an RBI file is out of date.
 
 ### Commands and queries
