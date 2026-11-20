@@ -1,0 +1,39 @@
+**Keep code simple**
+
+- Build the simplest thing that meets the requirement.
+- If an edge case is not likely to happen, do not add code for it. Tell the user about it: how likely it is, what happens if it occurs, and what handling it would cost. The user decides. Reason: complexity has a cost in every later change.
+- This does not apply when the edge case can cause data loss or corruption, a security or privacy breach, a duplicate payment, or a duplicate message to a person. Handle those cases. The rules under "Protect data integrity" are examples.
+- Add a pattern, layer, or abstraction only when a concrete requirement needs it. Do not add one for a possible future need.
+
+**Make behaviour explicit**
+
+- Prefer explicit calls over mechanisms that hide behaviour: callbacks, hooks, observers, and global state. Reason: hidden behaviour causes action at a distance.
+- Such a mechanism is acceptable when it is idiomatic for the framework and affects only its own object. Example: normalizing an attribute before it is saved.
+- If a step touches other records or has side effects (email, jobs, calls to external services), call it explicitly.
+
+**Protect data integrity**
+
+- A check that protects a write must use a row lock, optimistic locking, or a database constraint. Reason: two concurrent requests can both pass a check that only reads.
+- Writes that cost money or contact people must be idempotent:
+  - The client sends an idempotency key. It makes a new key for each submission.
+  - The server stores the key with the result. A repeated key returns the stored result. The write does not run again.
+  - Calls to providers that support it (for example, payment APIs) pass an idempotency key.
+- For other writes, use a unique constraint when a natural key exists. A duplicate returns the existing record.
+- Do not call external services inside a database transaction. Enqueue a job instead.
+- When the job queue is in the application database, enqueue a job in the same transaction as its data. Reason: the job and its data commit or roll back together.
+- The server is the authority for validation and authorization. Client-side checks only give fast feedback.
+- Database constraints are the last line of defense: NOT NULL, foreign keys, unique indexes, and check constraints.
+
+**Background jobs**
+
+- Every job must be idempotent. It must be safe to run two times.
+- A job checks the state of its records again before it acts. A record can be missing or changed.
+- Pass IDs and primitive values to jobs. Do not pass objects or large payloads.
+- Keep jobs thin. Put business logic in the code that the job calls.
+
+**Time**
+
+- Store times in UTC. Convert to a time zone only to calculate or show local times.
+- Read the current time once in each workflow. Reason: two reads can fall on different sides of midnight.
+- When "now" is a business input, pass it as an argument (for example, `as_of`) with the current time as the default. Reason: code can run as of another time, for previews, re-runs, and backfills.
+- Test time helpers do not change the database clock. In time-dependent SQL, pass the time as a parameter. Do not use the database's `now()`.

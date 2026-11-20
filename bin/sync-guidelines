@@ -13,7 +13,7 @@ cd "$(dirname "$0")/.."
 
 SOURCE="${GUIDELINES_SOURCE:-git@github.com:djmorton42/useful_prompts.git}"
 DEST="docs/guidelines"
-FILES=(testing.txt language.txt)
+FILES=(testing.txt language.txt coding.txt workflow.txt)
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
