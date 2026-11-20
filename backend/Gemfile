@@ -27,6 +27,9 @@ gem "bootsnap", require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 1.2"
 
+# Runtime type checks for Sorbet signatures [https://sorbet.org]
+gem "sorbet-runtime"
+
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin Ajax possible
 gem "rack-cors"
 
@@ -42,6 +45,12 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # Static type checking [https://sorbet.org] and RBI generation [https://github.com/Shopify/tapioca]
+  gem "sorbet", require: false
+  # Current tapioca needs prism 1. Without a minimum, Bundler keeps prism 2 and picks tapioca 0.11 from 2023.
+  gem "tapioca", ">= 0.20", require: false
+  gem "rubocop-sorbet", require: false
 
   # Testing
   gem "rspec-rails", "~> 8.0"
