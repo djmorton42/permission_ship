@@ -1,3 +1,7 @@
+# typed: false
+
+# CI.run evaluates the block with its DSL, so Sorbet cannot see the methods.
+
 # Run using bin/ci
 
 CI.run do

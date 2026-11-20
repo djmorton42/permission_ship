@@ -1,65 +1,117 @@
-# Shared shape of ApplicationCommand and ApplicationQuery: attributes,
+# typed: strict
+
+# Base class of ApplicationCommand and ApplicationQuery: attributes,
 # validation, dependencies and the organization (tenant).
-module UseCase
-  extend ActiveSupport::Concern
+#
+# sorbet/tapioca/compilers/use_case.rb generates the types of each subclass's
+# dependency readers and of its call method. Run bin/tapioca dsl after a change.
+class UseCase
+  extend T::Sig
+  extend T::Helpers
   include ActiveModel::Model
   include ActiveModel::Attributes
 
-  included do
-    class_attribute :dependency_defaults, instance_writer: false, default: {}
-    class_attribute :requires_organization, instance_accessor: false, default: true
+  abstract!
 
-    # The tenant. Required unless the class calls runs_without_organization.
-    attribute :organization_id, :string
-    validates :organization_id, presence: true, if: -> { self.class.requires_organization }
+  Inputs = T.type_alias { T::Hash[T.any(String, Symbol), T.anything] }
+
+  # An injected boundary. See "Dependencies" in ../../architecture.md.
+  class Dependency < T::Struct
+    # The class or module that the value and every fake must be.
+    const :type, T::Module[T.anything]
+    const :default, T.proc.returns(Object)
   end
 
-  class_methods do
+  # The tenant. Required unless the class calls runs_without_organization.
+  attribute :organization_id, :string
+  validates :organization_id, presence: true, if: :requires_organization?
+
+  class << self
+    extend T::Sig
+
     # call(inputs, **dependencies) or call(**inputs_and_dependencies).
     # Keywords that name a declared dependency are dependencies. Others are inputs.
+    sig { params(inputs: Inputs, keywords: Object).returns(UseCaseResult[T.anything]) }
     def call(inputs = {}, **keywords)
-      dependencies = keywords.slice(*dependency_defaults.keys)
-      new(inputs.to_h.merge(keywords.except(*dependency_defaults.keys)), dependencies).run
+      injected = keywords.select { |name, _| dependencies.key?(name) }
+      new(inputs.to_h.merge(keywords.reject { |name, _| injected.key?(name) }), injected).run
     end
+
+    sig { returns(T::Hash[Symbol, Dependency]) }
+    def dependencies = {}
 
     # Declares an injected boundary. Tests pass a fake to call.
-    def dependency(name, default:)
-      self.dependency_defaults = dependency_defaults.merge(name => default)
-      define_method(name) { @dependencies.fetch(name) { @dependencies[name] = dependency_defaults.fetch(name).call } }
+    sig { params(name: Symbol, type: T::Module[T.anything], default: T.proc.returns(Object)).void }
+    def dependency(name, type:, default:)
+      all = dependencies.merge(name => Dependency.new(type:, default:)).freeze
+      # Like class_attribute: subclasses inherit the singleton method.
+      define_singleton_method(:dependencies) { all }
+      define_method(name) do
+        # define_method runs the block on an instance, not on the class.
+        T.bind(self, UseCase)
+        dependency_value(name)
+      end
     end
 
+    sig { returns(T::Boolean) }
+    def requires_organization? = true
+
     # For global work: login, and the organizations table itself.
+    sig { void }
     def runs_without_organization
-      self.requires_organization = false
+      define_singleton_method(:requires_organization?) { false }
     end
   end
 
+  sig { params(inputs: Inputs, dependencies: T::Hash[Symbol, Object]).void }
   def initialize(inputs, dependencies)
-    @dependencies = dependencies.dup
+    @dependencies = T.let(dependencies.dup, T::Hash[Symbol, Object])
     super(inputs)
   end
 
+  sig { abstract.returns(UseCaseResult[T.anything]) }
+  def run; end
+
   private
 
-  def perform
-    raise NotImplementedError, "#{self.class.name} must define perform"
+  sig { abstract.returns(UseCaseResult[T.anything]) }
+  def perform; end
+
+  sig { returns(T::Boolean) }
+  def requires_organization? = self.class.requires_organization?
+
+  sig { params(name: Symbol).returns(Object) }
+  def dependency_value(name)
+    dependency = self.class.dependencies.fetch(name)
+    value = @dependencies.fetch(name) { @dependencies[name] = dependency.default.call }
+    return value if value.is_a?(dependency.type)
+
+    raise TypeError, "#{self.class.name} dependency #{name} must be a #{dependency.type}, not #{value.class}"
   end
 
-  def success(value = nil) = UseCaseResult.success(value)
+  sig { type_parameters(:V).params(value: T.type_parameter(:V)).returns(UseCaseResult::Success[T.type_parameter(:V)]) }
+  def success(value) = UseCaseResult.success(value)
 
-  def failure(category, field: nil, code:, message:)
+  sig { params(category: Symbol, code: String, message: String, field: T.nilable(Symbol)).returns(UseCaseResult::Failure) }
+  def failure(category, code:, message:, field: nil)
     UseCaseResult.failure(category, [ UseCaseResult::Error.new(field:, code:, message:) ])
   end
 
+  sig { returns(UseCaseResult::Failure) }
   def validation_failure
     UseCaseResult.failure(:validation, errors.map do |error|
       UseCaseResult::Error.new(field: error.attribute, code: error.type, message: error.message)
     end)
   end
 
-  def in_organization(&)
-    return yield unless self.class.requires_organization
+  sig do
+    type_parameters(:R)
+      .params(block: T.proc.returns(T.type_parameter(:R)))
+      .returns(T.type_parameter(:R))
+  end
+  def in_organization(&block)
+    return yield unless requires_organization?
 
-    Tenancy.with_organization(organization_id, &)
+    Tenancy.with_organization(organization_id, &block)
   end
 end

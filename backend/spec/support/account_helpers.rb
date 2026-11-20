@@ -1,3 +1,5 @@
+# typed: false
+
 module AccountHelpers
   def create_identity(email:, password:)
     Identity.create!(email:, password:)

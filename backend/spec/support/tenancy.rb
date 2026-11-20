@@ -1,3 +1,5 @@
+# typed: false
+
 module TenancyHelpers
   # Creates records in an organization. The tenant is cleared when the block ends.
   def in_organization(organization, &)

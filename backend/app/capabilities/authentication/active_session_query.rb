@@ -1,3 +1,5 @@
+# typed: strict
+
 # The session for a session ID from the cookie, or not_logged_in.
 # A session that has ended (expires_at) counts as not logged in.
 class Authentication::ActiveSessionQuery < ApplicationQuery
@@ -5,8 +7,13 @@ class Authentication::ActiveSessionQuery < ApplicationQuery
 
   attribute :session_id, :string
 
-  ActiveSession = Data.define(:id, :identity_id, :organization_id)
+  class ActiveSession < T::Struct
+    const :id, String
+    const :identity_id, String
+    const :organization_id, T.nilable(String)
+  end
 
+  sig { override.returns(UseCaseResult[ActiveSession]) }
   def perform
     session = Session.active_at(Time.current).find_by(id: session_id) if session_id.present?
     return Authentication.not_logged_in unless session

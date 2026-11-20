@@ -1,20 +1,25 @@
+# typed: strict
+
 # Base class for commands. See "Commands" in ../../architecture.md.
 #
 # 1. Validate the inputs. If they are not valid, return a validation failure.
 # 2. Open a transaction and set the organization.
 # 3. Call perform. If it returns a failure, roll back.
-class ApplicationCommand
-  include UseCase
+class ApplicationCommand < UseCase
+  abstract!
 
+  sig { override.returns(UseCaseResult[T.anything]) }
   def run
     return validation_failure unless valid?
 
-    result = nil
+    result = T.let(nil, T.nilable(UseCaseResult[T.anything]))
     ApplicationRecord.transaction do
-      result = in_organization { perform }
-      raise TypeError, "#{self.class.name}#perform must return a UseCaseResult" unless result.is_a?(UseCaseResult)
-      raise ActiveRecord::Rollback if result.failure?
+      # T.let also checks the type at runtime, for a perform without a sig.
+      performed = T.let(in_organization { perform }, UseCaseResult[T.anything])
+      result = performed
+      raise ActiveRecord::Rollback if performed.failure?
     end
-    result
+    # The block always runs. Rails catches ActiveRecord::Rollback inside transaction.
+    T.must(result)
   end
 end

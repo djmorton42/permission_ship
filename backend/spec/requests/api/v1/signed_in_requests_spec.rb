@@ -1,3 +1,5 @@
+# typed: false
+
 require "rails_helper"
 
 # Every API endpoint needs a signed-in session in an organization, unless its controller opts out.

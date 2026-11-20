@@ -8,6 +8,16 @@
 class Accounts::CurrentUserQuery
   include GeneratedAttributeMethods
 
+  class << self
+    sig do
+      params(
+        inputs: ::UseCase::Inputs,
+        keywords: Object
+      ).returns(UseCaseResult[::Accounts::CurrentUserQuery::CurrentUser])
+    end
+    def call(inputs = {}, **keywords); end
+  end
+
   module GeneratedAttributeMethods
     sig { returns(T.nilable(::String)) }
     def identity_id; end

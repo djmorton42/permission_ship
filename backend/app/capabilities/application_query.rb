@@ -1,10 +1,13 @@
+# typed: strict
+
 # Base class for queries. See "Queries" in ../../architecture.md.
 #
 # A query runs in a read-only transaction with the organization set, and
 # Active Record prevents writes.
-class ApplicationQuery
-  include UseCase
+class ApplicationQuery < UseCase
+  abstract!
 
+  sig { override.returns(UseCaseResult[T.anything]) }
   def run
     return validation_failure unless valid?
 

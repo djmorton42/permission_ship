@@ -1,3 +1,5 @@
+# typed: false
+
 require "rails_helper"
 
 # Cookie-authenticated writes accept only JSON from an allowed origin.

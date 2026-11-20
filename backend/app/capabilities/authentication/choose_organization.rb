@@ -1,3 +1,5 @@
+# typed: strict
+
 # Puts a session in one of the organizations where its identity has a user.
 class Authentication::ChooseOrganization < ApplicationCommand
   runs_without_organization
@@ -6,6 +8,7 @@ class Authentication::ChooseOrganization < ApplicationCommand
   # organization_id (from ApplicationCommand) is the organization to choose.
   validates :organization_id, presence: true
 
+  sig { override.returns(UseCaseResult[NilClass]) }
   def perform
     session = Session.lock.active_at(Time.current).find_by(id: session_id)
     return Authentication.not_logged_in unless session
@@ -16,6 +19,6 @@ class Authentication::ChooseOrganization < ApplicationCommand
     end
 
     session.update!(organization_id:)
-    success
+    success(nil)
   end
 end

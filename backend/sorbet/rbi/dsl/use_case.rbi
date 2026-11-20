@@ -5,49 +5,14 @@
 # Please instead update this file by running `bin/tapioca dsl UseCase`.
 
 
-module UseCase
-  include GeneratedInstanceMethods
+class UseCase
+  include GeneratedAttributeMethods
 
-  mixes_in_class_methods ::ActiveModel::Validations::ClassMethods
-  mixes_in_class_methods ::ActiveModel::Conversion::ClassMethods
-  mixes_in_class_methods ::ActiveModel::AttributeRegistration::ClassMethods
-  mixes_in_class_methods ::ActiveModel::AttributeMethods::ClassMethods
-  mixes_in_class_methods ::ActiveModel::Attributes::ClassMethods
-  mixes_in_class_methods GeneratedClassMethods
+  module GeneratedAttributeMethods
+    sig { returns(T.nilable(::String)) }
+    def organization_id; end
 
-  module GeneratedClassMethods
-    def __callbacks; end
-    def __callbacks=(value); end
-    def _validators; end
-    def _validators=(value); end
-    def _validators?; end
-    def attribute_aliases; end
-    def attribute_aliases=(value); end
-    def attribute_aliases?; end
-    def attribute_method_patterns; end
-    def attribute_method_patterns=(value); end
-    def attribute_method_patterns?; end
-    def dependency_defaults; end
-    def dependency_defaults=(value); end
-    def dependency_defaults?; end
-    def param_delimiter; end
-    def param_delimiter=(value); end
-    def param_delimiter?; end
-    def requires_organization; end
-    def requires_organization=(value); end
-    def requires_organization?; end
-  end
-
-  module GeneratedInstanceMethods
-    def __callbacks; end
-    def _validators; end
-    def _validators?; end
-    def attribute_aliases; end
-    def attribute_aliases?; end
-    def attribute_method_patterns; end
-    def attribute_method_patterns?; end
-    def dependency_defaults; end
-    def dependency_defaults?; end
-    def param_delimiter=(value); end
+    sig { params(value: T.nilable(::String)).returns(T.nilable(::String)) }
+    def organization_id=(value); end
   end
 end

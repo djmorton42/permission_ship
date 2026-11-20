@@ -1,3 +1,5 @@
+# typed: strict
+
 # A person in one organization. Capability: Accounts.
 class User < ApplicationRecord
   belongs_to :organization

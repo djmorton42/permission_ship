@@ -1,2 +1,7 @@
+# typed: strict
+
 # The ID and name of a record, for lists and headings in responses.
-RecordSummary = Data.define(:id, :name)
+class RecordSummary < T::Struct
+  const :id, String
+  const :name, String
+end

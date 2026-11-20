@@ -1,3 +1,5 @@
+# typed: strict
+
 # Migration helpers for tenant-owned tables. See "Multi-tenancy" in ../architecture.md.
 #
 #   class CreateSchools < ActiveRecord::Migration[8.1]
@@ -10,9 +12,21 @@
 #     end
 #   end
 module TenantTables
+  extend T::Sig
+  extend T::Helpers
+
+  requires_ancestor { ActiveRecord::Migration }
+
   # Creates a table with a UUIDv7 primary key, an organization_id column, and a
   # forced row-level security policy for the current tenant.
-  def create_tenant_table(table, **options)
+  sig do
+    params(
+      table: Symbol,
+      options: T.anything,
+      block: T.nilable(T.proc.params(table: ActiveRecord::ConnectionAdapters::TableDefinition).void)
+    ).void
+  end
+  def create_tenant_table(table, **options, &block)
     create_table(table, id: :uuid, default: -> { "uuidv7()" }, **options) do |t|
       t.references :organization, type: :uuid, null: false, foreign_key: true, index: false
       yield t if block_given?
@@ -31,6 +45,7 @@ module TenantTables
   # app.organization_id (see lib/tenancy.rb). NULLIF: Postgres returns an empty
   # string for a setting that a transaction set and then ended. If the tenant
   # is not set, no rows match.
+  sig { params(table: Symbol).void }
   def enable_tenant_isolation(table)
     execute <<~SQL
       ALTER TABLE #{table} ENABLE ROW LEVEL SECURITY;
@@ -42,6 +57,7 @@ module TenantTables
 
   # Adds <name>_id and a foreign key on (organization_id, <name>_id).
   # Reason: a row cannot refer to a row in another organization.
+  sig { params(table: Symbol, name: Symbol, to_table: T.any(String, Symbol), null: T::Boolean).void }
   def add_tenant_reference(table, name, to_table: name.to_s.pluralize, null: false)
     column = :"#{name}_id"
     add_column table, column, :uuid, null: null

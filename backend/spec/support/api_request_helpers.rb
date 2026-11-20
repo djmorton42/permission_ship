@@ -1,3 +1,5 @@
+# typed: false
+
 # Write requests as the React app sends them: JSON, from the app's own origin.
 # The API rejects other writes. See "Sessions and CSRF" in architecture.md.
 module ApiRequestHelpers

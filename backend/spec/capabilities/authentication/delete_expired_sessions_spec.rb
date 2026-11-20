@@ -1,3 +1,5 @@
+# typed: false
+
 require "rails_helper"
 
 # Ended sessions are deleted, so the sessions table holds only sessions that can still be used.

@@ -1,3 +1,5 @@
+# typed: strict
+
 # The signed-in session for API requests. See "Signed-in requests" in architecture.md.
 #
 # By default, every action needs a session (401 not_logged_in) in an organization
@@ -10,42 +12,61 @@
 # Commands and queries get the organization from organization_inputs, which takes it
 # from the session. An organization ID in the request never replaces it.
 module SignedInSession
+  extend T::Sig
+  extend T::Helpers
   extend ActiveSupport::Concern
+
+  requires_ancestor { Api::V1::BaseController }
 
   included do
     before_action :require_session
     before_action :require_organization
   end
 
-  class_methods do
+  module ClassMethods
+    extend T::Sig
+    extend T::Helpers
+
+    requires_ancestor { T.class_of(ActionController::API) }
+
+    sig { params(options: T.anything).void }
     def allow_without_session(**options)
       skip_before_action :require_session, **options
       skip_before_action :require_organization, **options
     end
 
+    sig { params(options: T.anything).void }
     def allow_without_organization(**options)
       skip_before_action :require_organization, **options
     end
   end
 
+  mixes_in_class_methods(ClassMethods)
+
   private
 
-  # An Authentication::ActiveSessionQuery::ActiveSession. Set by require_session.
-  attr_reader :current_session
+  # Set by require_session, which runs before every action that needs a session.
+  sig { returns(Authentication::ActiveSessionQuery::ActiveSession) }
+  def current_session
+    @current_session || raise("current_session is set only for actions that need a session")
+  end
 
+  sig { void }
   def require_session
     result = Authentication::ActiveSessionQuery.call(session_id: session_cookie_id)
-    return render_failure(result) if result.failure?
+    return render_failure(result) if result.is_a?(UseCaseResult::Failure)
 
-    @current_session = result.value
+    @current_session = T.let(result.value, T.nilable(Authentication::ActiveSessionQuery::ActiveSession))
     Authentication::RecordSessionActivity.call(session_id: current_session.id)
   end
 
+  sig { void }
   def require_organization
     render_failure(Authentication.organization_required) unless current_session.organization_id
   end
 
   # The inputs for a command or query, with the session's organization.
+  sig { params(inputs: UseCase::Inputs).returns(UseCase::Inputs) }
   def organization_inputs(inputs = {})
     inputs.to_h.with_indifferent_access.merge(organization_id: current_session.organization_id)
   end

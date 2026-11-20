@@ -1,3 +1,5 @@
+# typed: strict
+
 module Api
   module V1
     module Development
@@ -5,9 +7,12 @@ module Api
       # The route exists only in development and test. The action also checks the
       # environment, so the list is never sent from a deployed environment.
       class DemoAccountsController < BaseController
+        extend T::Sig
+
         # The login page reads it before anyone logs in.
         allow_without_session only: :show
 
+        sig { void }
         def show
           return head :not_found unless Rails.env.local?
 
