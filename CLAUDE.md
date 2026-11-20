@@ -14,8 +14,10 @@ Run the checks after every change, before you report the work as done. Report fa
 
 | You changed | Run |
 | --- | --- |
-| Ruby code | `cd backend && bundle exec rspec` and `bin/rubocop` |
-| Migrations | Also `bin/rails db:migrate` and `bin/rails db:test:prepare`, and commit `db/structure.sql` |
+| Ruby code | `cd backend && bundle exec rspec`, `bin/rubocop` and `bin/srb tc` |
+| Migrations | Also `bin/rails db:migrate`, `bin/rails db:test:prepare` and `bin/tapioca dsl`, and commit `db/structure.sql` and `sorbet/rbi/dsl/` |
+| Models, commands, queries or `app/lib/use_case.rb` | Also `bin/tapioca dsl`, and commit `sorbet/rbi/dsl/` |
+| Gems (`Gemfile.lock`) | Also `bin/tapioca gem`, and commit `sorbet/rbi/gems/` |
 | TypeScript code | `cd frontend && npx vitest run`, `npm run typecheck` and `npm run lint` |
 | A user journey (for example login) | Also `cd frontend && npm run test:e2e` |
 

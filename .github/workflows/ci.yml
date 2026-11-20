@@ -42,8 +42,15 @@ jobs:
         run: bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error
       - name: bundler-audit
         run: bin/bundler-audit
+      - name: Sorbet
+        run: bin/srb tc
+      - name: Gem RBIs are current
+        run: bin/tapioca gem --verify
       - name: Prepare database
         run: bin/rails db:prepare
+      # Needs the database: tapioca reads the columns of each model.
+      - name: DSL RBIs are current
+        run: bin/tapioca dsl --verify
       - name: RSpec
         run: bundle exec rspec
 
