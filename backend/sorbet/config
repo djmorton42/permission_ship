@@ -4,3 +4,4 @@
 --ignore=vendor/
 --parser=prism
 --enable-experimental-requires-ancestor
+--ignore=/spec/

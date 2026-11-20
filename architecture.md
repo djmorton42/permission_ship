@@ -378,7 +378,7 @@ We use Sorbet with tapioca. Signatures are `sig { }` blocks. Reason: Sorbet find
 | --- | --- |
 | `app/`, `lib/`, `sorbet/tapioca/compilers/` | `# typed: strict` |
 | `config/` | `# typed: strict`. A file that a DSL evaluates (`puma.rb`, `ci.rb`, `initializers/cors.rb`) is `# typed: false`. |
-| `spec/` | `# typed: false`. Reason: Sorbet cannot type RSpec example groups. |
+| `spec/` | `# typed: false`, and Sorbet ignores the directory (`sorbet/config`). Reason: Sorbet cannot type RSpec example groups, and a method that a spec defines in a block must not hide a missing method in app code. |
 
 - rubocop-sorbet enforces the sigils.
 - sorbet-runtime checks every signature when the code runs, in all environments. A value of the wrong type raises `TypeError`.
