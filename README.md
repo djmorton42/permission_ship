@@ -49,6 +49,8 @@ The full list is in `backend/db/seeds/demo_data.rb`. In development, the login p
 | ----------------------- | ------------------------------------------------- |
 | Backend tests           | `cd backend && bundle exec rspec`                 |
 | Backend lint            | `cd backend && bin/rubocop`                       |
+| Backend type check      | `cd backend && bin/srb tc`                        |
+| Regenerate RBI files    | `cd backend && bin/tapioca gem` (after gem changes), `bin/tapioca dsl` (after migrations, models, commands and queries) |
 | Backend security scan   | `cd backend && bin/brakeman && bin/bundler-audit` |
 | Frontend tests          | `cd frontend && npm test`                         |
 | Frontend lint / types   | `cd frontend && npm run lint && npm run typecheck`|

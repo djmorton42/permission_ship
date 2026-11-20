@@ -6,6 +6,8 @@ gem:
   # doc: true
   # workers: 5
 dsl:
+  # CI has only the test database.
+  environment: test
   # Add your `dsl` command parameters here:
   #
   # exclude:

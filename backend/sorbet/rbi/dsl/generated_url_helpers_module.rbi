@@ -64,21 +64,6 @@ module GeneratedUrlHelpersModule
   def rails_health_check_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
-  def rails_info_notes_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def rails_info_properties_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def rails_info_routes_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def rails_info_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
-  def rails_mailers_url(*args); end
-
-  sig { params(args: T.untyped).returns(String) }
   def rails_mailgun_inbound_emails_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }

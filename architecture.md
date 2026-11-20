@@ -146,6 +146,7 @@ A session ends at the first of these times:
 - A command declares its inputs with `attribute` and validates them with `validates`.
 - Every command has an `organization_id` input, and it is required. A global command (for example, login) calls `runs_without_organization`.
 - A command declares its dependencies with `dependency` (see Dependencies).
+- `perform` has a signature that gives the type of its result (see Types).
 - `Command.call(inputs, **dependencies)` runs the command and returns a `UseCaseResult`. `Command.call(**keywords)` also works: keywords that name a declared dependency are dependencies, and the others are inputs.
 - A command can return data, for example the ID of a new record or a small outcome payload.
 
@@ -156,10 +157,12 @@ class Enrollments::EnrollStudent < ApplicationCommand
   attribute :starts_on, :date
   validates :student_id, :school_id, :starts_on, presence: true
 
-  dependency :push_gateway, default: -> { PushGateway.new }
+  dependency :push_gateway, type: PushGateway, default: -> { PushGateway.new }
 
+  sig { override.returns(UseCaseResult[NilClass]) }
   def perform
     # load, authorize, check rules, write
+    success(nil)
   end
 end
 
@@ -224,9 +227,10 @@ Enrollments::RosterQuery.call(school_id:, page:)
 
 ## Results and errors
 
-- `UseCaseResult` is a success or a failure.
-- A success contains a value: an ID, a small outcome payload, or a response DTO.
-- A failure contains errors and a category.
+- `UseCaseResult` is a success (`UseCaseResult::Success`) or a failure (`UseCaseResult::Failure`).
+- A success contains a value: an ID, a small outcome payload, or a response DTO. `success(nil)` is a success with no value.
+- A failure contains errors and a category. It has no value. `failure.value` raises `UseCaseResult::NoValueError`.
+- Response DTOs are `T::Struct`s.
 - `Api::V1::BaseController` maps failure categories to HTTP statuses:
 
   | Category | Meaning | HTTP status |
@@ -277,8 +281,9 @@ Enrollments::RosterQuery.call(school_id:, page:)
 ## Dependencies
 
 - We do not use a DI framework.
-- A command or query declares a dependency with `dependency :name, default: -> { ... }`.
+- A command or query declares a dependency with `dependency :name, type: SomeClass, default: -> { ... }`.
 - Production code uses the defaults. Tests pass fakes to `call`, for example `call(inputs, push_gateway: fake)`.
+- A dependency's value must be of its `type`. Otherwise the reader raises `TypeError`. A fake subclasses the class, or includes the module that `type` names.
 - Inject only boundaries: external service gateways and ID or token generators.
 
 ## Time
@@ -364,6 +369,50 @@ Do not add a repository for each table. Do not copy every model into a domain ob
   - Browser: Playwright (`frontend/e2e/*.e2e.ts`). Browser tests run against the real API and the development database with demo data.
   - Network blocking, mutation, and property-based tools are in `todo.md`.
 - The full guidelines are in `docs/guidelines/testing.txt`.
+
+## Types
+
+We use Sorbet with tapioca. Signatures are `sig { }` blocks. Reason: Sorbet finds type errors before the tests run.
+
+| Files | Sigil |
+| --- | --- |
+| `app/`, `lib/`, `sorbet/tapioca/compilers/` | `# typed: strict` |
+| `config/` | `# typed: strict`. A file that a DSL evaluates (`puma.rb`, `ci.rb`, `initializers/cors.rb`) is `# typed: false`. |
+| `spec/` | `# typed: false`. Reason: Sorbet cannot type RSpec example groups. |
+
+- rubocop-sorbet enforces the sigils.
+- sorbet-runtime checks every signature when the code runs, in all environments. A value of the wrong type raises `TypeError`.
+- `bin/srb tc` checks the types.
+
+### RBI files
+
+- `sorbet/rbi/` contains RBI files that tapioca generates. Commit them. Do not edit them.
+- Put hand-written RBI files in `sorbet/rbi/shims/`.
+- Regenerate the RBI files after these changes:
+
+  | Change | Run |
+  | --- | --- |
+  | `Gemfile.lock` | `bin/tapioca gem` |
+  | A migration, a model, a command or query, or `app/lib/use_case.rb` | `bin/tapioca dsl` |
+
+- `bin/tapioca dsl` loads the app in the test environment and reads the test database (`sorbet/tapioca/config.yml`). Run `bin/rails db:test:prepare` first. Reason: CI has only the test database.
+- CI runs `bin/tapioca gem --verify` and `bin/tapioca dsl --verify`. They fail when an RBI file is out of date.
+
+### Commands and queries
+
+- Tapioca types `attribute` readers and writers from the Active Model type. Example: `attribute :name, :string` gives `T.nilable(String)`.
+- Our tapioca compiler (`sorbet/tapioca/compilers/use_case.rb`) generates the rest for each command and query:
+  - a reader for each dependency, of the dependency's `type`;
+  - `call`, which returns the type from the `perform` signature.
+- So every `perform` has a signature, for example `sig { override.returns(UseCaseResult[Started]) }`.
+- `UseCaseResult[Value]` is covariant. A `UseCaseResult::Failure` is a result of every value type.
+- To read the value, check for a failure with `is_a?(UseCaseResult::Failure)` first. Sorbet then knows that the result is a success. `failure?` does not narrow the type.
+
+### Escape hatches
+
+- Do not use `T.untyped` or `T.unsafe` in `app/` or `lib/`. RuboCop rejects them.
+- Use `T.must`, `T.cast` or `T.bind` only when a value has a type that Sorbet cannot prove. Add a comment that gives the reason.
+- Rails methods without signatures return `T.untyped`. A signature or `T.let` gives the value a type at the boundary, and sorbet-runtime checks it.
 
 ## Shared guidelines
 
