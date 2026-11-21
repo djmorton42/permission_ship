@@ -41,6 +41,9 @@
 **Time**
 
 - Store times in UTC. Convert to a time zone only to calculate or show local times.
+- A future time that people set in local time (for example, a trip that departs at 08:00) needs more than UTC. Also store the local date and time and the IANA time zone (for example, `America/Toronto`). These are the source of truth. The UTC time is calculated from them. Reason: when time zone rules change (for example, a region stops using daylight saving time), the UTC time of a future local time changes.
+- After a time zone rules update, calculate the UTC times of future local times again. Validate them against the local time and the time zone.
+- A future time that is a fixed interval from an instant (for example, a session that ends 30 minutes after a request) needs only UTC.
 - Read the current time once in each workflow. Reason: two reads can fall on different sides of midnight.
 - When "now" is a business input, pass it as an argument (for example, `as_of`) with the current time as the default. Reason: code can run as of another time, for previews, re-runs, and backfills.
 - Test time helpers do not change the database clock. In time-dependent SQL, pass the time as a parameter. Do not use the database's `now()`.
