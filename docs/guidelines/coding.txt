@@ -5,6 +5,13 @@
 - This does not apply when the edge case can cause data loss or corruption, a security or privacy breach, a duplicate payment, or a duplicate message to a person. Handle those cases. The rules under "Protect data integrity" are examples.
 - Add a pattern, layer, or abstraction only when a concrete requirement needs it. Do not add one for a possible future need.
 
+**Follow existing patterns**
+
+- Before you add a pattern, look for one that the project already uses for the same job. Look in similar code and in the project docs (for example `architecture.md`). Follow it. Reason: two ways to do the same thing cost more than one.
+- Add a new pattern only when no existing one fits. Tell the user. Record the new pattern in the project docs.
+- If an existing pattern fits badly, tell the user. Do not change it or add a second one without agreement.
+- If a new pattern replaces an old one, move the old code to the new pattern, or record the old pattern in the project's open work as one to remove.
+
 **Make behaviour explicit**
 
 - Prefer explicit calls over mechanisms that hide behaviour: callbacks, hooks, observers, and global state. Reason: hidden behaviour causes action at a distance.
