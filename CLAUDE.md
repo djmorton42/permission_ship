@@ -19,4 +19,4 @@
 | TypeScript code | `cd frontend && npx vitest run`, `npm run typecheck` and `npm run lint` |
 | A user journey (for example login) | Also `cd frontend && npm run test:e2e` |
 
-CI (`.github/workflows/ci.yml`) runs all of these on every push.
+CI (`.github/workflows/ci.yml`) runs all of these for each pull request and on each push to `main`.

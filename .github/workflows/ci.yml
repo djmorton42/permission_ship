@@ -1,7 +1,10 @@
 name: CI
 
+# Branches run CI through their pull request. Reason: a push to a branch with
+# an open pull request would otherwise start two runs.
 on:
   push:
+    branches: [main]
   pull_request:
 
 concurrency:
