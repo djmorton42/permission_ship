@@ -109,7 +109,8 @@ Credentials are in a global `identities` table. Reason: a person has one passwor
   - `allow_without_organization only: ...`: the session read and the organization picker, which run before the person picks an organization.
 - Pass `organization_inputs(inputs)` to commands and queries. It sets `organization_id` from the session. An `organization_id` in the request never replaces it. Reason: row-level security shows the organization the app sets, so the app must set the session's organization.
 - `POST /api/v1/session/organization` is the only action that reads an organization ID from the request. `ChooseOrganization` checks that the identity has a user there.
-- `current_session` has the session ID, the identity ID, and the organization ID. The actor for authorization is still an open decision (`todo.md`).
+- `current_session` has the session ID, the identity ID, and the organization ID.
+- Pass `actor_inputs(inputs)` to commands and queries that authorize the person. It adds `actor_user_id`: the session's user in the organization, or nil when the identity has no user there (`Accounts::ActorQuery`).
 
 ### Session lifetime
 
@@ -178,11 +179,25 @@ Enrollments::EnrollStudent.call(enroll_params)
 2. Open a transaction (see Transactions) and set the tenant.
 3. Call `perform`, which:
    1. loads data;
-   2. authorizes the actor (the authorization design is in `todo.md`);
+   2. authorizes the actor (see Authorization);
    3. checks business rules;
    4. writes.
 
 Steps 2 and 3 run in one transaction.
+
+### Authorization
+
+- The actor is a user. A command or query that authorizes declares `attribute :actor_user_id, :string`. Controllers set it with `actor_inputs`. Do not take it from the request.
+- A nil actor has no permissions. The authorization check refuses it.
+- Authorization rules are in a policy in the capability, for example `Accounts::AdministratorPolicy`. A policy check returns nil when the action is allowed, or a `forbidden` failure.
+- Rules can use roles and relationships (for example, "is this parent linked to this student").
+
+### School administrators
+
+- A school administrator (`school_administrators`) has a role in one school: `admin` or `assistant_admin`.
+- Only an admin of the school changes its administrators. Nobody changes their own role or removes themselves (`Accounts::AdministratorPolicy`).
+- These rules keep at least one admin in every school, because the actor is an admin who stays. Commands lock the school's administrators (`SchoolAdministrator.locked_for_school`) before the check. Reason: two admins cannot demote each other at the same time.
+- Every change writes an audit event.
 
 ### Business rules
 

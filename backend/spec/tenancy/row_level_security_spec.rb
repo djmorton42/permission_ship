@@ -75,8 +75,8 @@ RSpec.describe "Row-level security" do
           user = User.create!(organization: eldritch, identity:, name: "Obed Marsh")
           connection.transaction(requires_new: true) do
             connection.execute(ApplicationRecord.sanitize_sql_array([
-              "INSERT INTO school_administrators (organization_id, school_id, user_id, created_at, updated_at) " \
-              "VALUES (?, ?, ?, now(), now())", eldritch.id, quest_id, user.id
+              "INSERT INTO school_administrators (organization_id, school_id, user_id, role, created_at, updated_at) " \
+              "VALUES (?, ?, ?, 'admin', now(), now())", eldritch.id, quest_id, user.id
             ]))
           end
         end

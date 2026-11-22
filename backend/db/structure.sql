@@ -104,7 +104,9 @@ CREATE TABLE public.school_administrators (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     school_id uuid NOT NULL,
-    user_id uuid NOT NULL
+    user_id uuid NOT NULL,
+    role character varying NOT NULL,
+    CONSTRAINT school_administrators_role CHECK (((role)::text = ANY ((ARRAY['admin'::character varying, 'assistant_admin'::character varying])::text[])))
 );
 
 ALTER TABLE ONLY public.school_administrators FORCE ROW LEVEL SECURITY;
@@ -1408,6 +1410,7 @@ ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261122000002'),
 ('20261122000001'),
 ('20261119000002'),
 ('20261119000001'),

@@ -14,6 +14,7 @@ Rails.application.routes.draw do
       resource :session, only: %i[show create destroy] do
         resource :organization, only: :create, controller: "session_organizations"
       end
+      resources :school_administrators, only: %i[update destroy]
 
       # Demo logins for the login page. Development and test only.
       if Rails.env.local?

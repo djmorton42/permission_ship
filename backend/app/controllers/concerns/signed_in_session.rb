@@ -11,6 +11,7 @@
 #
 # Commands and queries get the organization from organization_inputs, which takes it
 # from the session. An organization ID in the request never replaces it.
+# actor_inputs also adds the actor: the session's user in that organization.
 module SignedInSession
   extend T::Sig
   extend T::Helpers
@@ -69,5 +70,17 @@ module SignedInSession
   sig { params(inputs: UseCase::Inputs).returns(UseCase::Inputs) }
   def organization_inputs(inputs = {})
     inputs.to_h.with_indifferent_access.merge(organization_id: current_session.organization_id)
+  end
+
+  # organization_inputs, with actor_user_id: the session's user in the organization.
+  # Nil when the identity has no user there. Commands then refuse the action.
+  sig { params(inputs: UseCase::Inputs).returns(UseCase::Inputs) }
+  def actor_inputs(inputs = {})
+    actor = Accounts::ActorQuery.call(
+      identity_id: current_session.identity_id, organization_id: current_session.organization_id
+    )
+    raise "ActorQuery failed: #{actor.errors.map(&:message)}" if actor.is_a?(UseCaseResult::Failure)
+
+    organization_inputs(inputs).merge(actor_user_id: actor.value)
   end
 end

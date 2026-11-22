@@ -5,11 +5,11 @@ module AccountHelpers
     Identity.create!(email:, password:)
   end
 
-  # Gives the identity a user in the organization who administers the schools.
-  def create_school_administrator(identity:, organization:, name:, schools: [])
+  # Gives the identity a user in the organization who administers the schools in the role.
+  def create_school_administrator(identity:, organization:, name:, schools: [], role: "admin")
     in_organization(organization) do
       user = User.create!(organization:, identity:, name:)
-      schools.each { |school| SchoolAdministrator.create!(organization:, school:, user:) }
+      schools.each { |school| SchoolAdministrator.create!(organization:, school:, user:, role:) }
       user
     end
   end
