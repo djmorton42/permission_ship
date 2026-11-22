@@ -4,6 +4,13 @@
 - Commit changes to docs about what we build or how we build it (for example architecture rules, open decisions, agent instructions) directly to the main branch, unless the project's instructions or memory say otherwise.
 - Never push without explicit permission from the user for that push. Permission for one push does not cover later pushes. This includes pushing a branch and opening a pull request.
 
+**Pull requests**
+
+- A pull request description has these parts, in this order:
+  1. Purpose: a short paragraph that says why the change is needed and what it achieves.
+  2. Changes: a summary of what changed.
+  3. Verification: the checks and tests that were run, and what they showed. When the change needs testing by hand, add a test plan: the steps to follow and the expected result of each step.
+
 **Checks**
 
 - Run the project's checks (tests, linters, type checkers) after every change, before you report the work as done.
