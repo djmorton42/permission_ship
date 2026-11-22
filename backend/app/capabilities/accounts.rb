@@ -13,6 +13,21 @@ module Accounts
   sig { returns(UseCaseResult::Failure) }
   def self.school_not_found = not_found("school_not_found", "School not found.")
 
+  sig { returns(UseCaseResult::Failure) }
+  def self.invitation_closed
+    UseCaseResult.failure(:validation, [ UseCaseResult::Error.new(
+      field: nil, code: "invitation_closed", message: "This invitation was accepted or revoked."
+    ) ])
+  end
+
+  # Someone resent or revoked the invitation since the admin loaded it.
+  sig { returns(UseCaseResult::Failure) }
+  def self.invitation_changed
+    UseCaseResult.failure(:conflict, [ UseCaseResult::Error.new(
+      field: nil, code: "invitation_changed", message: "This invitation changed. Reload it and try again."
+    ) ])
+  end
+
   sig { params(code: String, message: String).returns(UseCaseResult::Failure) }
   def self.not_found(code, message)
     UseCaseResult.failure(:not_found, [ UseCaseResult::Error.new(field: nil, code:, message:) ])

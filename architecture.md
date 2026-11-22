@@ -202,12 +202,13 @@ Steps 2 and 3 run in one transaction.
 ### Invitations
 
 - People become school administrators only by invitation email (`invitations`, capability `Accounts`).
-- An admin of the school invites (`Accounts::InviteAdministrator`). The operations team invites a school's first admin with `bin/rails onboarding:invite_school_admin`. The audit event names the operator. The API never sets `operator_reference`.
-- An invitation is open until it is accepted or revoked. Its link works until `expires_at`, 7 days after it was sent.
-- One open invitation for each person and school (a partial unique index). A repeated invite returns `409 invitation_open` and sends nothing. Reason: the natural key stops duplicate emails without `Idempotency-Key`.
+- An admin of the school invites (`Accounts::InviteAdministrator`), resends and revokes. The operations team invites a school's first admin with `bin/rails onboarding:invite_school_admin`. The audit event names the operator. The API never sets `operator_reference`.
+- An invitation is open until it is accepted or revoked. Its link works until `expires_at`, 7 days after it was sent or resent.
+- One open invitation for each person and school (a partial unique index). A repeated invite returns `409 invitation_open` and sends nothing.
+- Resend takes the `lock_version` the admin saw. A repeated resend has an old version, returns `409 invitation_changed`, and sends nothing. Reason: these natural keys stop duplicate emails without `Idempotency-Key`.
 - An invitation for a person who already administers the school is refused. Change their role instead.
 - The link is `APP_URL/invitations/accept#token=...`. The token is in the fragment, so it is not sent to servers or in the `Referer` header.
-- The token (`Accounts::InvitationToken`) is signed, and holds the organization ID, the invitation ID and the invitation's `lock_version`. It expires at `expires_at`. The database and the job arguments never hold it: the mail job makes it when it renders the email. A change to the invitation changes `lock_version`, so older links stop working.
+- The token (`Accounts::InvitationToken`) is signed, and holds the organization ID, the invitation ID and the invitation's `lock_version`. It expires at `expires_at`. The database and the job arguments never hold it: the mail job makes it when it renders the email. Resend and revoke change `lock_version`, so older links stop working.
 - The mail job loads the invitation again. It sends nothing for an invitation that is no longer open.
 
 ### Business rules

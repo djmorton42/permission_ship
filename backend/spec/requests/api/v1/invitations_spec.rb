@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-# Admins invite people to administer their school.
+# Admins invite people to administer their school, and resend or revoke invitations.
 RSpec.describe "Invitations", type: :request do
   let(:eldritch) { Organization.create!(name: "Eldritch Shores Board of Education") }
   let(:innsmouth) { create_school(organization: eldritch, name: "Innsmouth Heights Secondary School") }
@@ -65,5 +65,25 @@ RSpec.describe "Invitations", type: :request do
 
     expect(response).to have_http_status(:conflict)
     expect(error_codes).to eq([ "invitation_open" ])
+  end
+
+  it "lets an admin resend an invitation" do
+    log_in_as("marsha.deepwater@example.com")
+    invite
+
+    perform_enqueued_jobs { api_post "/api/v1/invitations/#{invitation.id}/resend", { lock_version: 0 } }
+
+    expect(response).to have_http_status(:no_content)
+    expect(sent_mail.size).to eq(2)
+  end
+
+  it "lets an admin revoke an invitation" do
+    log_in_as("marsha.deepwater@example.com")
+    invite
+
+    api_delete "/api/v1/invitations/#{invitation.id}"
+
+    expect(response).to have_http_status(:no_content)
+    expect(invitation).not_to be_open
   end
 end
