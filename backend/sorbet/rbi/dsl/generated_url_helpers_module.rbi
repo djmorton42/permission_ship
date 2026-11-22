@@ -16,6 +16,9 @@ module GeneratedUrlHelpersModule
   def api_v1_health_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def api_v1_school_administrator_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def api_v1_session_organization_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }

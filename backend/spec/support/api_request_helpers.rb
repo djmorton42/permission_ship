@@ -10,6 +10,10 @@ module ApiRequestHelpers
     post(path, params:, as: :json, headers: { "Origin" => OWN_ORIGIN })
   end
 
+  def api_patch(path, params = {})
+    patch(path, params:, as: :json, headers: { "Origin" => OWN_ORIGIN })
+  end
+
   def api_delete(path)
     delete(path, headers: { "Origin" => OWN_ORIGIN })
   end

@@ -8,6 +8,7 @@
 class SchoolAdministrator
   include GeneratedAssociationMethods
   include GeneratedAttributeMethods
+  include EnumMethodsModule
   extend CommonRelationMethods
   extend GeneratedRelationMethods
 
@@ -24,6 +25,9 @@ class SchoolAdministrator
       ).returns(::SchoolAdministrator)
     end
     def new(attributes = nil, &block); end
+
+    sig { returns(T::Hash[T.any(String, Symbol), String]) }
+    def roles; end
   end
 
   module CommonRelationMethods
@@ -431,6 +435,20 @@ class SchoolAdministrator
     def third_to_last!; end
   end
 
+  module EnumMethodsModule
+    sig { void }
+    def admin!; end
+
+    sig { returns(T::Boolean) }
+    def admin?; end
+
+    sig { void }
+    def assistant_admin!; end
+
+    sig { returns(T::Boolean) }
+    def assistant_admin?; end
+  end
+
   module GeneratedAssociationMethods
     sig { params(args: T.untyped, blk: T.untyped).returns(::Organization) }
     def build_organization(*args, &blk); end
@@ -515,6 +533,9 @@ class SchoolAdministrator
   end
 
   module GeneratedAssociationRelationMethods
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def admin(*args, &blk); end
+
     sig { returns(PrivateAssociationRelation) }
     def all; end
 
@@ -526,6 +547,9 @@ class SchoolAdministrator
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def arel_columns(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def assistant_admin(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def create_with(*args, &blk); end
@@ -582,10 +606,19 @@ class SchoolAdministrator
     def lock(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def locked_for_school(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def merge(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def none(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def not_admin(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
+    def not_assistant_admin(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateAssociationRelation) }
     def null_relation?(*args, &blk); end
@@ -861,6 +894,9 @@ class SchoolAdministrator
     def restore_organization_id!; end
 
     sig { void }
+    def restore_role!; end
+
+    sig { void }
     def restore_school_id!; end
 
     sig { void }
@@ -868,6 +904,51 @@ class SchoolAdministrator
 
     sig { void }
     def restore_user_id!; end
+
+    sig { returns(::String) }
+    def role; end
+
+    sig { params(value: T.any(::String, ::Symbol)).returns(T.any(::String, ::Symbol)) }
+    def role=(value); end
+
+    sig { returns(T::Boolean) }
+    def role?; end
+
+    sig { returns(T.nilable(::String)) }
+    def role_before_last_save; end
+
+    sig { returns(T.untyped) }
+    def role_before_type_cast; end
+
+    sig { returns(T::Boolean) }
+    def role_came_from_user?; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def role_change; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def role_change_to_be_saved; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def role_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def role_in_database; end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def role_previous_change; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def role_previously_changed?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable(::String)) }
+    def role_previously_was; end
+
+    sig { returns(T.nilable(::String)) }
+    def role_was; end
+
+    sig { void }
+    def role_will_change!; end
 
     sig { returns(T.nilable([::ActiveSupport::TimeWithZone, ::ActiveSupport::TimeWithZone])) }
     def saved_change_to_created_at; end
@@ -892,6 +973,12 @@ class SchoolAdministrator
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def saved_change_to_organization_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { returns(T.nilable([::String, ::String])) }
+    def saved_change_to_role; end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def saved_change_to_role?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { returns(T.nilable([::String, ::String])) }
     def saved_change_to_school_id; end
@@ -1059,6 +1146,9 @@ class SchoolAdministrator
     def will_save_change_to_organization_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
+    def will_save_change_to_role?(from: T.unsafe(nil), to: T.unsafe(nil)); end
+
+    sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
     def will_save_change_to_school_id?(from: T.unsafe(nil), to: T.unsafe(nil)); end
 
     sig { params(from: T.untyped, to: T.untyped).returns(T::Boolean) }
@@ -1069,6 +1159,9 @@ class SchoolAdministrator
   end
 
   module GeneratedRelationMethods
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def admin(*args, &blk); end
+
     sig { returns(PrivateRelation) }
     def all; end
 
@@ -1080,6 +1173,9 @@ class SchoolAdministrator
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def arel_columns(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def assistant_admin(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def create_with(*args, &blk); end
@@ -1136,10 +1232,19 @@ class SchoolAdministrator
     def lock(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def locked_for_school(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def merge(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def none(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def not_admin(*args, &blk); end
+
+    sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
+    def not_assistant_admin(*args, &blk); end
 
     sig { params(args: T.untyped, blk: T.untyped).returns(PrivateRelation) }
     def null_relation?(*args, &blk); end

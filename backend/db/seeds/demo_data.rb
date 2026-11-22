@@ -88,6 +88,6 @@ module DemoData
 
   def self.add_administrator(organization:, school:, name:, identity:)
     user = User.find_or_create_by!(organization:, identity:) { it.name = name }
-    SchoolAdministrator.find_or_create_by!(organization:, school:, user:)
+    SchoolAdministrator.find_or_create_by!(organization:, school:, user:) { it.role = "admin" }
   end
 end

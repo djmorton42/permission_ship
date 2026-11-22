@@ -6,9 +6,6 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 
 ### Authorization
 
-- What is the model: roles, policies, relationship checks (for example, "is this parent linked to this student"), or a mix?
-- Authorization runs in step 3 of the command pipeline. What does that step do?
-- How does a command or query know the actor? An attribute on each one, or a context argument to `call`?
 - A school administrator who is also a parent in the same organization: one login with different views, or two accounts? `users` has a unique index on `(organization_id, identity_id)`, so now it is one user with two relationships. Two users in one organization needs a change to the index and to the organization picker. Decide before real user rows exist.
 - Which administrative data can board admins see?
 
@@ -62,10 +59,12 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 - [ ] Push the useful_prompts repo. Then run `bin/sync-guidelines` with no override. Result: `docs/guidelines/SOURCE` records the GitHub URL.
 - [ ] Set up the database roles in CI and production. Production needs `PRIMARY_DATABASE_URL` (app role) and `OWNER_DATABASE_URL` (owner role), and a password for `permishly_app`.
 - [ ] Add a shared spec example for tenant isolation, so each query spec does not write its own.
+- [ ] Add a concurrency spec for two admins who demote each other at the same time. It needs a spec without the wrapping transaction, and cleanup as the owner role, because the app role cannot delete audit events.
+- [ ] When board administrators can change a school's administrators, add a "last admin" check. Now the rule follows from "an admin who is not the target" (see "School administrators" in `architecture.md`).
 - [ ] Add commands to create organizations, schools, users and school administrators. Then make `db/seeds/demo_data.rb` use them.
 - [ ] School administrator roles and invitations. When each part is built, move its rules to `architecture.md`. Pull requests, in order:
   1. Audit events: who changed what, and when. Built.
-  2. Authorization and roles: the actor on commands and queries, a policy, the `admin` and `assistant_admin` roles, and commands to change a role and to remove an administrator.
+  2. Authorization and roles: the actor on commands and queries, a policy, the `admin` and `assistant_admin` roles, and commands to change a role and to remove an administrator. Built.
   3. Send invitations: invite, resend and revoke, the invitation email, and a rake task for the operations team.
   4. Accept invitations: a new identity sets a password, an existing identity logs in.
   5. A screen to manage a school's administrators.
