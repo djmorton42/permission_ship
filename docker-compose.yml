@@ -1,4 +1,5 @@
-# Local development services (Postgres also stores Solid Queue jobs). Start with: docker compose up -d
+# Local development services (Postgres also stores Solid Queue jobs; Mailpit catches outgoing mail).
+# Start with: docker compose up -d
 name: permishly
 
 services:
@@ -14,6 +15,19 @@ services:
       - postgres-data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U permishly"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Catches all mail that development and browser tests send. Nothing reaches a real inbox.
+  # Inbox: http://localhost:8025. Browser tests read mail from its API (frontend/e2e/support/mailpit.ts).
+  mailpit:
+    image: axllent/mailpit:v1.33.1
+    ports:
+      - "${SMTP_PORT:-1025}:1025"
+      - "${MAILPIT_PORT:-8025}:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
       interval: 5s
       timeout: 5s
       retries: 10

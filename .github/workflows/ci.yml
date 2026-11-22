@@ -92,6 +92,10 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U permishly"
           --health-interval 5s --health-timeout 5s --health-retries 10
+      # Catches the mail that the API sends. Tests read it from its API (frontend/e2e/support/mailpit.ts).
+      mailpit:
+        image: axllent/mailpit:v1.33.1
+        ports: ["1025:1025", "8025:8025"]
     steps:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
