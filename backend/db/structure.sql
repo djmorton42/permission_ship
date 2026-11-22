@@ -39,6 +39,27 @@ CREATE TABLE public.ar_internal_metadata (
 
 
 --
+-- Name: audit_events; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.audit_events (
+    id uuid DEFAULT uuidv7() NOT NULL,
+    organization_id uuid NOT NULL,
+    operator_reference character varying,
+    action character varying NOT NULL,
+    subject_type character varying NOT NULL,
+    subject_id uuid NOT NULL,
+    details jsonb DEFAULT '{}'::jsonb NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    actor_user_id uuid,
+    CONSTRAINT audit_events_one_actor CHECK ((num_nonnulls(actor_user_id, operator_reference) = 1))
+);
+
+ALTER TABLE ONLY public.audit_events FORCE ROW LEVEL SECURITY;
+
+
+--
 -- Name: identities; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -681,6 +702,14 @@ ALTER TABLE ONLY public.ar_internal_metadata
 
 
 --
+-- Name: audit_events audit_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_events
+    ADD CONSTRAINT audit_events_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: identities identities_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -845,6 +874,27 @@ ALTER TABLE ONLY public.users
 --
 
 CREATE UNIQUE INDEX idx_on_organization_id_school_id_user_id_d6ba7a8af9 ON public.school_administrators USING btree (organization_id, school_id, user_id);
+
+
+--
+-- Name: idx_on_organization_id_subject_type_subject_id_2d8753274e; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_on_organization_id_subject_type_subject_id_2d8753274e ON public.audit_events USING btree (organization_id, subject_type, subject_id);
+
+
+--
+-- Name: index_audit_events_on_organization_id_and_actor_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_audit_events_on_organization_id_and_actor_user_id ON public.audit_events USING btree (organization_id, actor_user_id);
+
+
+--
+-- Name: index_audit_events_on_organization_id_and_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_audit_events_on_organization_id_and_id ON public.audit_events USING btree (organization_id, id);
 
 
 --
@@ -1252,11 +1302,27 @@ ALTER TABLE ONLY public.school_administrators
 
 
 --
+-- Name: audit_events fk_rails_a39de7fd58; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_events
+    ADD CONSTRAINT fk_rails_a39de7fd58 FOREIGN KEY (organization_id, actor_user_id) REFERENCES public.users(organization_id, id);
+
+
+--
 -- Name: solid_queue_batch_executions fk_rails_bc9f981155; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.solid_queue_batch_executions
     ADD CONSTRAINT fk_rails_bc9f981155 FOREIGN KEY (job_id) REFERENCES public.solid_queue_jobs(id) ON DELETE CASCADE;
+
+
+--
+-- Name: audit_events fk_rails_be0ed9e37f; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_events
+    ADD CONSTRAINT fk_rails_be0ed9e37f FOREIGN KEY (organization_id) REFERENCES public.organizations(id);
 
 
 --
@@ -1284,6 +1350,12 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: audit_events; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.audit_events ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: school_administrators; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -1294,6 +1366,13 @@ ALTER TABLE public.school_administrators ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.schools ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: audit_events tenant_isolation; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tenant_isolation ON public.audit_events USING ((organization_id = (NULLIF(current_setting('app.organization_id'::text, true), ''::text))::uuid));
+
 
 --
 -- Name: school_administrators tenant_isolation; Type: POLICY; Schema: public; Owner: -
@@ -1329,6 +1408,7 @@ ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261122000001'),
 ('20261119000002'),
 ('20261119000001'),
 ('20261117000007'),
