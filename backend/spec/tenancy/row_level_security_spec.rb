@@ -39,6 +39,25 @@ RSpec.describe "Row-level security" do
       expect(School.count).to eq(0)
     end
 
+    # Rails turns on the query cache for each request. set_config must still run each time.
+    it "sets the organization again in a second block, with the query cache on" do
+      names = ApplicationRecord.cache do
+        in_organization(eldritch) { School.count }
+        in_organization(eldritch) { School.pluck(:name) }
+      end
+
+      expect(names).to eq([ "Innsmouth Heights Secondary School" ])
+    end
+
+    it "does not return another organization's cached rows, with the query cache on" do
+      names = ApplicationRecord.cache do
+        in_organization(eldritch) { School.pluck(:name) }
+        in_organization(realms) { School.pluck(:name) }
+      end
+
+      expect(names).to eq([ "Quest Preparatory Academy" ])
+    end
+
     it "restores the outer organization after a nested block" do
       names = in_organization(eldritch) do
         in_organization(realms) { School.count }

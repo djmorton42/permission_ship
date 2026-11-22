@@ -37,9 +37,14 @@ module Tenancy
     ApplicationRecord.connection.select_value("SELECT current_setting('#{SETTING}', true)").presence
   end
 
+  # Rails turns on the query cache for requests and jobs. The cache does not know the
+  # tenant, so a change of tenant clears it. Otherwise a query returns rows cached for
+  # another organization, and a repeated set_config comes from the cache and does not run.
   sig { params(organization_id: T.nilable(String)).void }
   def self.set(organization_id)
-    ApplicationRecord.connection.select_value(
+    connection = ApplicationRecord.connection
+    connection.clear_query_cache
+    connection.select_value(
       ApplicationRecord.sanitize_sql_array([ "SELECT set_config(?, ?, true)", SETTING, organization_id.to_s ])
     )
   end
