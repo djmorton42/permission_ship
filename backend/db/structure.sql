@@ -74,6 +74,32 @@ CREATE TABLE public.identities (
 
 
 --
+-- Name: invitations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.invitations (
+    id uuid DEFAULT uuidv7() NOT NULL,
+    organization_id uuid NOT NULL,
+    email character varying NOT NULL,
+    name character varying NOT NULL,
+    role character varying NOT NULL,
+    operator_reference character varying,
+    expires_at timestamp(6) without time zone NOT NULL,
+    accepted_at timestamp(6) without time zone,
+    revoked_at timestamp(6) without time zone,
+    lock_version integer DEFAULT 0 NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    school_id uuid NOT NULL,
+    invited_by_user_id uuid,
+    CONSTRAINT invitations_one_inviter CHECK ((num_nonnulls(invited_by_user_id, operator_reference) = 1)),
+    CONSTRAINT invitations_role CHECK (((role)::text = ANY ((ARRAY['admin'::character varying, 'assistant_admin'::character varying])::text[])))
+);
+
+ALTER TABLE ONLY public.invitations FORCE ROW LEVEL SECURITY;
+
+
+--
 -- Name: organizations; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -720,6 +746,14 @@ ALTER TABLE ONLY public.identities
 
 
 --
+-- Name: invitations invitations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.invitations
+    ADD CONSTRAINT invitations_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: organizations organizations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -904,6 +938,34 @@ CREATE UNIQUE INDEX index_audit_events_on_organization_id_and_id ON public.audit
 --
 
 CREATE UNIQUE INDEX index_identities_on_email ON public.identities USING btree (email);
+
+
+--
+-- Name: index_invitations_on_organization_id_and_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_invitations_on_organization_id_and_id ON public.invitations USING btree (organization_id, id);
+
+
+--
+-- Name: index_invitations_on_organization_id_and_invited_by_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_invitations_on_organization_id_and_invited_by_user_id ON public.invitations USING btree (organization_id, invited_by_user_id);
+
+
+--
+-- Name: index_invitations_on_organization_id_and_school_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_invitations_on_organization_id_and_school_id ON public.invitations USING btree (organization_id, school_id);
+
+
+--
+-- Name: index_invitations_one_open; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_invitations_one_open ON public.invitations USING btree (organization_id, school_id, email) WHERE ((accepted_at IS NULL) AND (revoked_at IS NULL));
 
 
 --
@@ -1224,6 +1286,14 @@ ALTER TABLE ONLY public.schools
 
 
 --
+-- Name: invitations fk_rails_0fe4c14f0e; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.invitations
+    ADD CONSTRAINT fk_rails_0fe4c14f0e FOREIGN KEY (organization_id) REFERENCES public.organizations(id);
+
+
+--
 -- Name: users fk_rails_2f296ee649; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1253,6 +1323,14 @@ ALTER TABLE ONLY public.solid_queue_failed_executions
 
 ALTER TABLE ONLY public.solid_queue_blocked_executions
     ADD CONSTRAINT fk_rails_4cd34e2228 FOREIGN KEY (job_id) REFERENCES public.solid_queue_jobs(id) ON DELETE CASCADE;
+
+
+--
+-- Name: invitations fk_rails_56084d763e; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.invitations
+    ADD CONSTRAINT fk_rails_56084d763e FOREIGN KEY (organization_id, school_id) REFERENCES public.schools(organization_id, id);
 
 
 --
@@ -1312,6 +1390,14 @@ ALTER TABLE ONLY public.audit_events
 
 
 --
+-- Name: invitations fk_rails_b2e9277184; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.invitations
+    ADD CONSTRAINT fk_rails_b2e9277184 FOREIGN KEY (organization_id, invited_by_user_id) REFERENCES public.users(organization_id, id);
+
+
+--
 -- Name: solid_queue_batch_executions fk_rails_bc9f981155; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1358,6 +1444,12 @@ ALTER TABLE ONLY public.users
 ALTER TABLE public.audit_events ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: invitations; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.invitations ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: school_administrators; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -1374,6 +1466,13 @@ ALTER TABLE public.schools ENABLE ROW LEVEL SECURITY;
 --
 
 CREATE POLICY tenant_isolation ON public.audit_events USING ((organization_id = (NULLIF(current_setting('app.organization_id'::text, true), ''::text))::uuid));
+
+
+--
+-- Name: invitations tenant_isolation; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY tenant_isolation ON public.invitations USING ((organization_id = (NULLIF(current_setting('app.organization_id'::text, true), ''::text))::uuid));
 
 
 --
@@ -1410,6 +1509,7 @@ ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261122000003'),
 ('20261122000002'),
 ('20261122000001'),
 ('20261119000002'),

@@ -86,6 +86,7 @@ The backend reads these env vars; the defaults match `docker-compose.yml`. Brows
 | `DB_APP_USERNAME` | `permishly_app` (app role, row-level security applies) |
 | `DB_APP_PASSWORD` | `permishly_app`         |
 | `CORS_ORIGINS` | `http://localhost:5173`    |
+| `APP_URL`      | `http://localhost:5173` (the React app, for links in emails; production must set it) |
 | `SMTP_HOST`    | `localhost` (development only) |
 | `SMTP_PORT`    | `1025` (development only) |
 

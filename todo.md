@@ -65,9 +65,10 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 - [ ] School administrator roles and invitations. When each part is built, move its rules to `architecture.md`. Pull requests, in order:
   1. Audit events: who changed what, and when. Built.
   2. Authorization and roles: the actor on commands and queries, a policy, the `admin` and `assistant_admin` roles, and commands to change a role and to remove an administrator. Built.
-  3. Send invitations: invite, resend and revoke, the invitation email, and a rake task for the operations team.
-  4. Accept invitations: a new identity sets a password, an existing identity logs in.
-  5. A screen to manage a school's administrators.
+  3. Send invitations: invite, the invitation email, and a rake task for the operations team. Built.
+  4. Resend and revoke invitations.
+  5. Accept invitations: a new identity sets a password, an existing identity logs in.
+  6. A screen to manage a school's administrators.
 
   Decided rules:
   - Roles are per school. A board administrator role comes later.
@@ -80,9 +81,9 @@ Open decisions and pending work. When a decision is made, add it to `architectur
   - An invitation for a person who is already an administrator of the school is refused. Change the role instead.
   - A school without a board administrator gets its first admin from the operations team, through a rake task. The audit record shows the operator and a reference (for example, a ticket number).
   - Every role change, invitation, acceptance, revocation and removal writes an audit event: the actor, the change (before and after), the subject and the time.
-- [ ] Production email: use Amazon SES. Set it up before the first deployed environment.
+- [ ] Production email: use Amazon SES. Set it up before the first deployed environment. Also set `APP_URL` (links in emails) and the sender address (`ApplicationMailer` sends from `from@example.com`).
 - [ ] Add a serializer for response DTOs. DTOs define `as_json` for now.
-- [ ] Build `Idempotency-Key` support (storage, controller support, React header) before the first payment or notification command.
+- [ ] Build `Idempotency-Key` support (storage, controller support, React header) before the first payment or bulk notification command. Invitations use natural keys instead (see "Invitations" in `architecture.md`).
 - [ ] Testing setup:
   - [ ] Add WebMock and block external network access in specs.
 - [ ] Add `bin/sync-guidelines --check` to CI. CI needs read access to the private useful_prompts repo (for example, a deploy key).

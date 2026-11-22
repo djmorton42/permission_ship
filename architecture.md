@@ -199,6 +199,17 @@ Steps 2 and 3 run in one transaction.
 - These rules keep at least one admin in every school, because the actor is an admin who stays. Commands lock the school's administrators (`SchoolAdministrator.locked_for_school`) before the check. Reason: two admins cannot demote each other at the same time.
 - Every change writes an audit event.
 
+### Invitations
+
+- People become school administrators only by invitation email (`invitations`, capability `Accounts`).
+- An admin of the school invites (`Accounts::InviteAdministrator`). The operations team invites a school's first admin with `bin/rails onboarding:invite_school_admin`. The audit event names the operator. The API never sets `operator_reference`.
+- An invitation is open until it is accepted or revoked. Its link works until `expires_at`, 7 days after it was sent.
+- One open invitation for each person and school (a partial unique index). A repeated invite returns `409 invitation_open` and sends nothing. Reason: the natural key stops duplicate emails without `Idempotency-Key`.
+- An invitation for a person who already administers the school is refused. Change their role instead.
+- The link is `APP_URL/invitations/accept#token=...`. The token is in the fragment, so it is not sent to servers or in the `Referer` header.
+- The token (`Accounts::InvitationToken`) is signed, and holds the organization ID, the invitation ID and the invitation's `lock_version`. It expires at `expires_at`. The database and the job arguments never hold it: the mail job makes it when it renders the email. A change to the invitation changes `lock_version`, so older links stop working.
+- The mail job loads the invitation again. It sends nothing for an invitation that is no longer open.
+
 ### Business rules
 
 - Put a rule that applies to one record on its model, as a plain method or a validation. Do not use a callback.
