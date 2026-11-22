@@ -31,8 +31,14 @@ Rails.application.configure do
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
 
-  # Don't care if the mailer can't send.
-  config.action_mailer.raise_delivery_errors = false
+  # Send mail to Mailpit (docker-compose.yml), which catches it. View it at http://localhost:8025.
+  # Raise delivery errors, so a mail job fails visibly when Mailpit is not running.
+  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.smtp_settings = {
+    address: ENV.fetch("SMTP_HOST", "localhost"),
+    port: Integer(ENV.fetch("SMTP_PORT", "1025"))
+  }
+  config.action_mailer.raise_delivery_errors = true
 
   # Make template changes take effect immediately.
   config.action_mailer.perform_caching = false

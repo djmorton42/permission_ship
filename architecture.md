@@ -358,6 +358,7 @@ Do not add a repository for each table. Do not copy every model into a domain ob
   - Backend: RSpec, FactoryBot, and Rails time helpers (`travel_to`, `freeze_time`).
   - Frontend: Vitest and Testing Library.
   - Browser: Playwright (`frontend/e2e/*.e2e.ts`). Browser tests run against the real API and the development database with demo data.
+  - Email: request and command specs check `ActionMailer::Base.deliveries`. Browser tests read the mail that the real API sent from Mailpit (`frontend/e2e/support/mailpit.ts`). Reason: a browser test proves the whole journey, including delivery over SMTP.
   - Network blocking, mutation, and property-based tools are in `todo.md`.
 - The full guidelines are in `docs/guidelines/testing.txt`.
 

@@ -7,7 +7,7 @@ A communications portal for schools, parents, teachers and students. See `etc/ov
 ```
 backend/            Rails 8.1 API (Ruby 4.0), PostgreSQL, Solid Queue, RSpec
 frontend/           React 19 + TypeScript (Vite), React Router, TanStack Query, Tailwind, Vitest
-docker-compose.yml  Local Postgres 18
+docker-compose.yml  Local Postgres 18 and Mailpit
 mise.toml           Pinned Ruby and Node versions
 Procfile.dev        Processes started by bin/dev
 architecture.md     Architecture rules
@@ -24,8 +24,8 @@ docs/walkthroughs/  HTML tutorials that explain the code of a feature
 ## Getting started
 
 ```sh
-bin/setup   # installs Ruby/Node, starts Postgres, installs deps, prepares the DB
-bin/dev     # runs Postgres, Rails (:3000), Solid Queue workers and Vite (:5173)
+bin/setup   # installs Ruby/Node, starts Postgres and Mailpit, installs deps, prepares the DB
+bin/dev     # runs Postgres, Mailpit, Rails (:3000), Solid Queue workers and Vite (:5173)
 ```
 
 Open http://localhost:5173. Vite proxies `/api` to Rails, so the browser talks to a single origin in development.
@@ -42,6 +42,13 @@ In development, `bin/rails db:seed` (and `db:prepare` on a new database) loads t
 | `morgan.crossway@example.com` | Schools in two boards (shows the organization picker) |
 
 The full list is in `backend/db/seeds/demo_data.rb`. In development, the login page also lists every board, school and login. Pick a login to fill in the form. The list comes from `GET /api/v1/development/demo_accounts`, which exists only in development and test.
+
+## Email
+
+In development, Rails sends mail over SMTP to Mailpit, which catches it. Nothing reaches a real inbox. See the mail at http://localhost:8025. Mail is sent by a job, so `bin/jobs` (part of `bin/dev`) must be running.
+
+- RSpec does not use Mailpit. Mail goes to `ActionMailer::Base.deliveries` (the `:test` delivery method).
+- Browser tests use Mailpit. The e2e Rails server runs jobs in Puma (`SOLID_QUEUE_IN_PUMA`). Read a message with `waitForEmail` from `frontend/e2e/support/mailpit.ts`. Use a recipient and a time, because development and the tests share one inbox.
 
 ## Common tasks
 
@@ -68,7 +75,7 @@ The full list is in `backend/db/seeds/demo_data.rb`. In development, the login p
 
 ## Configuration
 
-The backend reads these env vars; the defaults match `docker-compose.yml`:
+The backend reads these env vars; the defaults match `docker-compose.yml`. Browser tests read `MAILPIT_URL` (default `http://localhost:8025`).
 
 | Variable       | Default                    |
 | -------------- | -------------------------- |
@@ -79,6 +86,8 @@ The backend reads these env vars; the defaults match `docker-compose.yml`:
 | `DB_APP_USERNAME` | `permishly_app` (app role, row-level security applies) |
 | `DB_APP_PASSWORD` | `permishly_app`         |
 | `CORS_ORIGINS` | `http://localhost:5173`    |
+| `SMTP_HOST`    | `localhost` (development only) |
+| `SMTP_PORT`    | `1025` (development only) |
 
 In production, set `PRIMARY_DATABASE_URL` (app role) and `OWNER_DATABASE_URL` (owner role) instead. The database roles are described in `architecture.md`.
 
