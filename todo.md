@@ -64,6 +64,25 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 - [ ] Set up the database roles in CI and production. Production needs `PRIMARY_DATABASE_URL` (app role) and `OWNER_DATABASE_URL` (owner role), and a password for `permishly_app`.
 - [ ] Add a shared spec example for tenant isolation, so each query spec does not write its own.
 - [ ] Add commands to create organizations, schools, users and school administrators. Then make `db/seeds/demo_data.rb` use them.
+- [ ] School administrator roles and invitations. When each part is built, move its rules to `architecture.md`. Pull requests, in order:
+  1. Audit events: who changed what, and when.
+  2. Authorization and roles: the actor on commands and queries, a policy, the `admin` and `assistant_admin` roles, and commands to change a role and to remove an administrator.
+  3. Send invitations: invite, resend and revoke, the invitation email, and a rake task for the operations team.
+  4. Accept invitations: a new identity sets a password, an existing identity logs in.
+  5. A screen to manage a school's administrators.
+
+  Decided rules:
+  - Roles are per school. A board administrator role comes later.
+  - An admin can invite admins and assistant admins, promote and demote other administrators, and remove them.
+  - An assistant admin does other administration tasks (for example, adding students). An assistant admin does not invite or remove administrators.
+  - Nobody changes their own role or removes themselves.
+  - A school always has at least one admin. A pending invitation does not count.
+  - People join only by invitation email. The invitee sets their own password. An existing identity logs in to accept.
+  - An invitation token is single-use and expires after 7 days. Resend makes a new token and cancels the old one. An admin can revoke an invitation.
+  - An invitation for a person who is already an administrator of the school is refused. Change the role instead.
+  - A school without a board administrator gets its first admin from the operations team, through a rake task. The audit record shows the operator and a reference (for example, a ticket number).
+  - Every role change, invitation, acceptance, revocation and removal writes an audit event: the actor, the change (before and after), the subject and the time.
+- [ ] Production email: use Amazon SES. Set it up before the first deployed environment.
 - [ ] Add a serializer for response DTOs. DTOs define `as_json` for now.
 - [ ] Build `Idempotency-Key` support (storage, controller support, React header) before the first payment or notification command.
 - [ ] Testing setup:
