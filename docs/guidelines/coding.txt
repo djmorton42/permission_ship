@@ -12,6 +12,13 @@
 - If an existing pattern fits badly, tell the user. Do not change it or add a second one without agreement.
 - If a new pattern replaces an old one, move the old code to the new pattern, or record the old pattern in the project's open work as one to remove.
 
+**Fix the cause, not the symptom**
+
+- Find and fix the cause of a problem. Do not work around it.
+- A workaround makes a symptom go away but leaves its cause. Examples: a test step that taps past an unexpected dialog, a retry until a step passes, a suppressed error, a special case for one environment, or a weaker check.
+- If you cannot find a correct solution, stop. Tell the user what you tried, what you know about the cause, and the options. The user decides. Reason: the goal is behaviour that is correct, not behaviour that only appears to work. A workaround hides the real problem, and it costs more later.
+- A workaround is sometimes the right choice, for example for a known bug in a dependency. Use one only with the user's agreement. In the code, give the reason and a link to the cause. Record it in the project's open work, so it is removed when the cause is fixed.
+
 **Make behaviour explicit**
 
 - Prefer explicit calls over mechanisms that hide behaviour: callbacks, hooks, observers, and global state. Reason: hidden behaviour causes action at a distance.

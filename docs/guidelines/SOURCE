@@ -2,5 +2,5 @@ Synced by bin/sync-guidelines. Do not edit these files here; change them in the
 source repo and re-run the script.
 
 source: git@github.com:djmorton42/useful_prompts.git
-commit: 3fec47e0ba22950794a350d7b4849108b36e5d7b
+commit: a6abf4f7f75973da688e8cd9df59cd9a4464eb56
 files: testing.txt language.txt coding.txt workflow.txt
