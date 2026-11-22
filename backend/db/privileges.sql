@@ -26,3 +26,6 @@ GRANT SELECT (identity_id, organization_id) ON users TO permishly_cross_tenant_r
 ALTER FUNCTION identity_organization_ids(uuid) OWNER TO permishly_cross_tenant_reader;
 REVOKE ALL ON FUNCTION identity_organization_ids(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION identity_organization_ids(uuid) TO permishly_app;
+
+-- Audit events are append-only.
+REVOKE UPDATE, DELETE ON audit_events FROM permishly_app;

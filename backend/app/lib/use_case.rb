@@ -100,7 +100,9 @@ class UseCase
   sig { returns(UseCaseResult::Failure) }
   def validation_failure
     UseCaseResult.failure(:validation, errors.map do |error|
-      UseCaseResult::Error.new(field: error.attribute, code: error.type, message: error.message)
+      # An error on :base is not about one field.
+      field = error.attribute == :base ? nil : error.attribute
+      UseCaseResult::Error.new(field:, code: error.type, message: error.message)
     end)
   end
 

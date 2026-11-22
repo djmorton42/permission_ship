@@ -19,11 +19,10 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 ### Auditing and history
 
 - Enrollment history is a requirement. Do we model it explicitly (effective-dated records) or use a general audit trail?
-- What else needs an audit trail? For example: permissions, payments, role changes, data access.
+- What else needs an audit trail? For example: permissions, payments, data access. (Changes to school administrators are decided.)
 - Which reads are sensitive enough to audit? For example: student records, medical and contact details, exports. (How we record audited reads is in "Auditing" in `architecture.md`.)
 - Which audited reads must fail when the audit record cannot be written?
 - How does a query result give its subject IDs (for example, which students) to the caller that writes the audit record?
-- What does an audit record contain? At least the actor, the organization, the query or command, and the subject IDs.
 
 ### Student data privacy
 
@@ -65,7 +64,7 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 - [ ] Add a shared spec example for tenant isolation, so each query spec does not write its own.
 - [ ] Add commands to create organizations, schools, users and school administrators. Then make `db/seeds/demo_data.rb` use them.
 - [ ] School administrator roles and invitations. When each part is built, move its rules to `architecture.md`. Pull requests, in order:
-  1. Audit events: who changed what, and when.
+  1. Audit events: who changed what, and when. Built.
   2. Authorization and roles: the actor on commands and queries, a policy, the `admin` and `assistant_admin` roles, and commands to change a role and to remove an administrator.
   3. Send invitations: invite, resend and revoke, the invitation email, and a rake task for the operations team.
   4. Accept invitations: a new identity sets a password, an existing identity logs in.
