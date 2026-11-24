@@ -1,0 +1,12 @@
+Hello <%= @invitation.name %>,
+
+<% if @invitation.inviter_name -%>
+<%= @invitation.inviter_name %> invited you to administer <%= @invitation.school_name %> as <%= @invitation.role == "admin" ? "an admin" : "an assistant admin" %>.
+<% else -%>
+You are invited to administer <%= @invitation.school_name %> as <%= @invitation.role == "admin" ? "an admin" : "an assistant admin" %>.
+<% end -%>
+
+Accept the invitation:
+<%= @link %>
+
+The link works until <%= @invitation.expires_at.to_fs(:long) %> UTC. If you did not expect this email, you can ignore it.

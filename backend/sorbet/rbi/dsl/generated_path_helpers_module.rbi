@@ -19,6 +19,9 @@ module GeneratedPathHelpersModule
   def api_v1_school_administrator_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def api_v1_school_invitations_path(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def api_v1_session_organization_path(*args); end
 
   sig { params(args: T.untyped).returns(String) }

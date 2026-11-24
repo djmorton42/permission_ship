@@ -55,6 +55,9 @@ module Permishly
       Rails.env.production? ? "" : "http://localhost:5173,http://localhost:5174"
     }.split(",").map(&:strip).reject(&:empty?)
 
+    # The React app's URL, for links in emails. Production must set APP_URL.
+    config.x.app_url = ENV.fetch("APP_URL") { Rails.env.production? ? nil : "http://localhost:5173" }
+
     # structure.sql stores row-level security policies. schema.rb cannot.
     config.active_record.schema_format = :sql
 

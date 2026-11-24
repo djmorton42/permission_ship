@@ -38,4 +38,10 @@ RSpec.describe Accounts::AdministratorPolicy do
     expect(failure.category).to eq(:forbidden)
     expect(codes(failure)).to eq([ "own_administration" ])
   end
+
+  it "lets only an admin invite or manage invitations" do
+    expect(described_class.check_invite(actor: admin)).to be_nil
+    expect(codes(described_class.check_invite(actor: administrator("silas", "assistant_admin")))).to eq([ "admin_required" ])
+    expect(codes(described_class.check_invite(actor: nil))).to eq([ "admin_required" ])
+  end
 end
