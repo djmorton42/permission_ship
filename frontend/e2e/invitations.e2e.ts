@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { waitForEmail } from './support/mailpit'
+import { waitForEmail } from './support/mailpit.ts'
 
 // A demo admin from backend/db/seeds/demo.rb.
 const admin = { email: 'marsha.deepwater@eldritch-shores.example', password: 'permishly-demo' }
