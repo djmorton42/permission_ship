@@ -19,7 +19,7 @@ module Accounts::AdministratorPolicy
     nil
   end
 
-  # Invite a person to administer the school.
+  # Invite a person to administer the school, or resend or revoke an invitation.
   sig { params(actor: T.nilable(SchoolAdministrator)).returns(T.nilable(UseCaseResult::Failure)) }
   def self.check_invite(actor:)
     failure("admin_required", "Only an admin of the school can change its administrators.") unless actor&.admin?

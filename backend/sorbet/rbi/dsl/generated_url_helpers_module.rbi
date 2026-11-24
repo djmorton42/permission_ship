@@ -16,6 +16,9 @@ module GeneratedUrlHelpersModule
   def api_v1_health_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def api_v1_invitation_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def api_v1_school_administrator_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -101,6 +104,9 @@ module GeneratedUrlHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def rails_storage_redirect_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def resend_api_v1_invitation_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def turbo_recede_historical_location_url(*args); end

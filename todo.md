@@ -66,7 +66,7 @@ Open decisions and pending work. When a decision is made, add it to `architectur
   1. Audit events: who changed what, and when. Built.
   2. Authorization and roles: the actor on commands and queries, a policy, the `admin` and `assistant_admin` roles, and commands to change a role and to remove an administrator. Built.
   3. Send invitations: invite, the invitation email, and a rake task for the operations team. Built.
-  4. Resend and revoke invitations.
+  4. Resend and revoke invitations. Built.
   5. Accept invitations: a new identity sets a password, an existing identity logs in.
   6. A screen to manage a school's administrators.
 

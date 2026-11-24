@@ -18,6 +18,9 @@ Rails.application.routes.draw do
       resources :schools, only: [] do
         resources :invitations, only: :create
       end
+      resources :invitations, only: :destroy do
+        post :resend, on: :member
+      end
 
       # Demo logins for the login page. Development and test only.
       if Rails.env.local?

@@ -2,7 +2,7 @@
 
 module Api
   module V1
-    # An admin invites a person to administer a school.
+    # An admin invites a person to administer a school, and resends or revokes the invitation.
     class InvitationsController < BaseController
       extend T::Sig
 
@@ -15,6 +15,18 @@ module Api
         return render_failure(result) if result.is_a?(UseCaseResult::Failure)
 
         render json: { id: result.value }, status: :created
+      end
+
+      sig { void }
+      def resend
+        render_result(Accounts::ResendInvitation.call(
+          actor_inputs(invitation_id: params[:id], lock_version: params[:lock_version])
+        ))
+      end
+
+      sig { void }
+      def destroy
+        render_result(Accounts::RevokeInvitation.call(actor_inputs(invitation_id: params[:id])))
       end
     end
   end
