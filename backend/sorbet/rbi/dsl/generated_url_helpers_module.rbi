@@ -16,6 +16,9 @@ module GeneratedUrlHelpersModule
   def api_v1_health_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
+  def api_v1_invitation_acceptances_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
   def api_v1_invitation_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
@@ -38,6 +41,9 @@ module GeneratedUrlHelpersModule
 
   sig { params(args: T.untyped).returns(String) }
   def new_rails_conductor_inbound_email_url(*args); end
+
+  sig { params(args: T.untyped).returns(String) }
+  def preview_api_v1_invitation_acceptances_url(*args); end
 
   sig { params(args: T.untyped).returns(String) }
   def rails_blob_representation_proxy_url(*args); end

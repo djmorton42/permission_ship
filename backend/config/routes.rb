@@ -21,6 +21,9 @@ Rails.application.routes.draw do
       resources :invitations, only: :destroy do
         post :resend, on: :member
       end
+      resources :invitation_acceptances, only: :create do
+        post :preview, on: :collection
+      end
 
       # Demo logins for the login page. Development and test only.
       if Rails.env.local?

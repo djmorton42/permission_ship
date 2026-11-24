@@ -12,12 +12,7 @@ class Authentication::LogIn < ApplicationCommand
   attribute :user_agent, :string
   validates :email, :password, presence: true
 
-  class Started < T::Struct
-    const :session_id, String
-    const :expires_at, ActiveSupport::TimeWithZone
-  end
-
-  sig { override.returns(UseCaseResult[Started]) }
+  sig { override.returns(UseCaseResult[Authentication::StartSession::Started]) }
   def perform
     # authenticate_by takes the same time for an unknown email and a wrong password.
     identity = Identity.authenticate_by(email:, password:)
@@ -26,16 +21,9 @@ class Authentication::LogIn < ApplicationCommand
     organization_ids = Identity.organization_ids_for(identity.id)
     return no_organization if organization_ids.empty?
 
-    now = Time.current
-    session = Session.create!(
-      identity:,
-      organization_id: (organization_ids.first if organization_ids.one?),
-      ip_address:,
-      user_agent:,
-      expires_at: now + Session::LIFETIME,
-      last_active_at: now
+    Authentication::StartSession.call(
+      identity_id: identity.id, organization_id: (organization_ids.first if organization_ids.one?), ip_address:, user_agent:
     )
-    success(Started.new(session_id: session.id, expires_at: session.expires_at))
   end
 
   private
