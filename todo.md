@@ -87,6 +87,7 @@ Open decisions and pending work. When a decision is made, add it to `architectur
 - [ ] Build `Idempotency-Key` support (storage, controller support, React header) before the first payment or bulk notification command. Invitations use natural keys instead (see "Invitations" in `architecture.md`).
 - [ ] Testing setup:
   - [ ] Add WebMock and block external network access in specs.
+  - [ ] Browser tests leave data in the development database. Each run of `frontend/e2e/invitations.e2e.ts` adds an assistant admin, with a new email, to Innsmouth Heights Secondary School. `db:seed` does not remove these rows. A cleanup needs the owner role, because the app role cannot delete audit events. Options: a separate e2e database that each run resets, or a cleanup task that runs as the owner role.
 - [ ] Add `bin/sync-guidelines --check` to CI. CI needs read access to the private useful_prompts repo (for example, a deploy key).
 - [ ] Authentication security (gaps found after the first login feature):
   - [ ] Rate limit: also limit by account, not only by IP address. Configure a shared production cache store, because `rate_limit` keeps its counts in `Rails.cache` and the default file store is per machine. Deny the login when the counter does not increment (a null store now disables the limit). Set the trusted proxies, so `request.remote_ip` is the client address.
