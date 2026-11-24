@@ -23,7 +23,8 @@ export default defineConfig({
       command: `bin/rails db:seed && bin/rails server -p ${apiPort} -P tmp/pids/e2e.pid`,
       cwd: '../backend',
       // Run jobs inside the server, so mail reaches Mailpit (e2e/support/mailpit.ts).
-      env: { SOLID_QUEUE_IN_PUMA: '1' },
+      // Links in emails go to the test's web server.
+      env: { SOLID_QUEUE_IN_PUMA: '1', APP_URL: `http://localhost:${webPort}` },
       url: `http://localhost:${apiPort}/up`,
       reuseExistingServer: false,
       timeout: 60_000,
