@@ -10,6 +10,13 @@ module Accounts
   sig { returns(UseCaseResult::Failure) }
   def self.invitation_not_found = not_found("invitation_not_found", "Invitation not found.")
 
+  # One error for every link that does not work, so the link does not tell why.
+  sig { returns(UseCaseResult::Failure) }
+  def self.invitation_link_invalid
+    not_found("invitation_link_invalid",
+              "This invitation link does not work. It expired, or it was used, resent or revoked. Ask for a new invitation.")
+  end
+
   sig { returns(UseCaseResult::Failure) }
   def self.school_not_found = not_found("school_not_found", "School not found.")
 

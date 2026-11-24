@@ -97,6 +97,7 @@ Credentials are in a global `identities` table. Reason: a person has one passwor
 - `sessions` is a global table. A session has an `identity_id` and an `organization_id`, which is null until the person picks one.
 - The session ID is in a signed, `HttpOnly`, `SameSite=Lax` cookie. Reason: JavaScript cannot read it, and browsers do not send it with cross-site POST requests.
 - Login is rate limited: 10 attempts in 3 minutes for each IP address.
+- `Authentication::StartSession` creates every session: at login, and when a person accepts an invitation.
 - Login never shows organizations before authentication succeeds. Reason: that would reveal which organizations an email address belongs to.
 
 ### Signed-in requests
@@ -105,7 +106,7 @@ Credentials are in a global `identities` table. Reason: a person has one passwor
 
 - By default, every action needs a session and an organization. Without a session, the response is 401 `not_logged_in`. Without an organization, the response is 403 `organization_required`. Reason: a new endpoint is protected even if its author forgets.
 - A controller opts out for named actions only:
-  - `allow_without_session only: ...`: login, logout, health, and the development demo accounts.
+  - `allow_without_session only: ...`: login, logout, invitation acceptance, health, and the development demo accounts.
   - `allow_without_organization only: ...`: the session read and the organization picker, which run before the person picks an organization.
 - Pass `organization_inputs(inputs)` to commands and queries. It sets `organization_id` from the session. An `organization_id` in the request never replaces it. Reason: row-level security shows the organization the app sets, so the app must set the session's organization.
 - `POST /api/v1/session/organization` is the only action that reads an organization ID from the request. `ChooseOrganization` checks that the identity has a user there.
@@ -210,6 +211,12 @@ Steps 2 and 3 run in one transaction.
 - The link is `APP_URL/invitations/accept#token=...`. The token is in the fragment, so it is not sent to servers or in the `Referer` header.
 - The token (`Accounts::InvitationToken`) is signed, and holds the organization ID, the invitation ID and the invitation's `lock_version`. It expires at `expires_at`. The database and the job arguments never hold it: the mail job makes it when it renders the email. Resend and revoke change `lock_version`, so older links stop working.
 - The mail job loads the invitation again. It sends nothing for an invitation that is no longer open.
+- Acceptance has two endpoints, without a session (`InvitationAcceptancesController`). The token is in the JSON body of both. Reason: a token in a URL goes to server logs and browser history.
+  - `POST /api/v1/invitation_acceptances/preview` shows the school, the role, the inviter, and `has_account` (`Accounts::InvitationPreviewQuery`).
+  - `POST /api/v1/invitation_acceptances` accepts (`Accounts::AcceptInvitation`) and logs the person in to the organization. A session that the browser had before ends.
+- The server reads the organization from the token, then loads the invitation in that organization. The link works only when the invitation is open, its `lock_version` is the token's, and it has not expired (`Invitation#link_works?`). Otherwise the response is `404 invitation_link_invalid`, with one message for all reasons.
+- A new person sets their password. A person with an identity gives their password (`Authentication::ConfirmIdentity`). A wrong password returns `422 incorrect_password` and the invitation stays open. Acceptance is rate limited like login.
+- The person gets a user in the organization if they have none, with the name from the invitation. The audit event `invitation.accepted` names that user as the actor.
 
 ### Business rules
 

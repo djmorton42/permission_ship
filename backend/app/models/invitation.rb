@@ -18,4 +18,11 @@ class Invitation < ApplicationRecord
 
   sig { returns(T::Boolean) }
   def open? = accepted_at.nil? && revoked_at.nil?
+
+  # True when a link with this lock_version works now: the invitation is open, it was not
+  # resent or revoked after the link was made, and it has not expired.
+  sig { params(lock_version: T.nilable(Integer)).returns(T::Boolean) }
+  def link_works?(lock_version)
+    open? && self.lock_version == lock_version && expires_at.future?
+  end
 end

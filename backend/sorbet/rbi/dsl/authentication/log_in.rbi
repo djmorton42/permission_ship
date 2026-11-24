@@ -13,7 +13,7 @@ class Authentication::LogIn
       params(
         inputs: ::UseCase::Inputs,
         keywords: Object
-      ).returns(UseCaseResult[::Authentication::LogIn::Started])
+      ).returns(UseCaseResult[::Authentication::StartSession::Started])
     end
     def call(inputs = {}, **keywords); end
   end
