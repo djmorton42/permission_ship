@@ -68,7 +68,7 @@ Open decisions and pending work. When a decision is made, add it to `architectur
   3. Send invitations: invite, the invitation email, and a rake task for the operations team. Built.
   4. Resend and revoke invitations. Built.
   5. Accept invitations (API): a new identity sets a password, an existing identity gives its password. Built.
-  6. The invitation page in React, and an e2e test that opens the email in Mailpit.
+  6. The invitation page in React, and an e2e test that opens the email in Mailpit. Built.
   7. A screen to manage a school's administrators.
 
   Decided rules:

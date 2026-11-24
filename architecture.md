@@ -217,6 +217,7 @@ Steps 2 and 3 run in one transaction.
 - The server reads the organization from the token, then loads the invitation in that organization. The link works only when the invitation is open, its `lock_version` is the token's, and it has not expired (`Invitation#link_works?`). Otherwise the response is `404 invitation_link_invalid`, with one message for all reasons.
 - A new person sets their password. A person with an identity gives their password (`Authentication::ConfirmIdentity`). A wrong password returns `422 incorrect_password` and the invitation stays open. Acceptance is rate limited like login.
 - The person gets a user in the organization if they have none, with the name from the invitation. The audit event `invitation.accepted` names that user as the actor.
+- The React page (`/invitations/accept`) reads the token, then removes it from the address bar and browser history.
 
 ### Business rules
 
